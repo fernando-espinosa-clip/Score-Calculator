@@ -59,7 +59,7 @@ export const options = {
 const criterios = [
   {
     categoria: "Service Workers",
-    importancia: 4,
+    importancia: 4,  // Muy importante
     maximo: 5,
     minimo: -3,
     aspectos: [
@@ -74,7 +74,7 @@ const criterios = [
   },
   {
     categoria: "Design System",
-    importancia: 4,
+    importancia: 4,  // Muy importante
     maximo: 2,
     minimo: -3,
     aspectos: [
@@ -86,7 +86,7 @@ const criterios = [
   },
   {
     categoria: "Librería de Iconos",
-    importancia: 3,
+    importancia: 3, //Importante
     maximo: 0,
     minimo: -3,
     aspectos: [
@@ -98,7 +98,7 @@ const criterios = [
   },
   {
     categoria: "Librerías de Estilos",
-    importancia: 3,
+    importancia: 3, //Importante
     maximo: 2,
     minimo: -3,
     aspectos: [
@@ -118,7 +118,7 @@ const criterios = [
       { descripcion: "Tiene la librería Labs", valor: -2 },
     ],
   },
-  /*{
+  {
     categoria: "Librerías de manejo de llamadas asíncronas y cache",
     importancia: 4, // Muy importante
     maximo: 2,
@@ -247,7 +247,7 @@ const criterios = [
       { descripcion: "Sí tiene configuración de caché", valor: 2 },
       { descripcion: "No tiene configuración de caché", valor: -2 },
     ],
-  }, */
+  },
 ];
 
 let puntuacionGeneral = 0;
