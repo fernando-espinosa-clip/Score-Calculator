@@ -1,5 +1,8 @@
+import { CriteriaData } from "../types/criteriaTypes";
+
+
 // Configuration for evaluation criteria
-export const criteriaData = [
+export const criteriaData: CriteriaData = [
     {
         category: "Service Workers",
         importance: 4, // Very important

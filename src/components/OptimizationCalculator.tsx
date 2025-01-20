@@ -8,52 +8,14 @@ import {
   Button,
 } from "@mui/material";
 
-import { Line } from "react-chartjs-2";
-import {
-  BarElement,
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
 import CircularProgressWithLabel from "./CircularProgressWithLabel";
 import { scoreColors } from "../helpers/utils";
 import { generateChartData, calculateResults } from "../helpers/calculationUtils";
 import { exportToCSV, exportToJSON, exportToMarkdown } from "../helpers/exportUtils";
 import CriteriaForm from "./CriteriaForm";
+import LineChart from "./LineChart";
 
 import { criteriaData } from "../data/criteriaData"; // Importamos los criterios
-import { ChartOptions } from "../types/chartTypes";
-
-
-ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    BarElement,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend
-);
-
-// Opciones de la gráfica
-export const chartOptions: ChartOptions = {
-  responsive: true,
-  plugins: {
-    legend: {
-      position: "top",
-    },
-    title: {
-      display: true,
-      text: "Optimization Points",
-    },
-  },
-};
 
 const OptimizationCalculator: React.FC = () => {
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({});
@@ -177,9 +139,8 @@ const OptimizationCalculator: React.FC = () => {
                   </Typography>
                 </li>
               </ul>
-                <Box mt={4}>
-                  hello
-                <Line data={generateChartData(results)} options={chartOptions} />
+              <Box mt={4}>
+              <LineChart results={results} />
               </Box>
               <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 4 }}>
                 <Button variant="contained" onClick={() => exportToCSV({ results, generalScore, maxScore, minScore, base10Score})}>
