@@ -59,7 +59,7 @@ export const options = {
 const criterios = [
   {
     categoria: "Service Workers",
-    importancia: 4,  // Muy importante
+    importancia: 4, // Muy importante
     maximo: 5,
     minimo: -3,
     aspectos: [
@@ -74,7 +74,7 @@ const criterios = [
   },
   {
     categoria: "Design System",
-    importancia: 4,  // Muy importante
+    importancia: 4, // Muy importante
     maximo: 2,
     minimo: -3,
     aspectos: [
@@ -369,17 +369,6 @@ const CalculadoraOptimizacion = () => {
       <Typography variant="h4" gutterBottom align="center">
         Calculadora de Optimización del Proyecto
       </Typography>
-      {scoreColors.map((color) => (
-        <Box
-          key={color}
-          sx={{
-            width: "50px",
-            height: "50px",
-            margin: "6px",
-            backgroundColor: color,
-          }}
-        />
-      ))}
       <Box>
         {criterios.map((criterio) => (
           <Paper elevation={3} key={criterio.categoria} sx={{ p: 2, my: 2 }}>
