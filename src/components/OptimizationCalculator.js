@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import { saveAs } from "file-saver";
 
-import { Bar, Line } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
 
 import {
   BarElement,
@@ -198,7 +198,6 @@ const criteria = [
   },
 ];
 
-
 // Variables for general, max, and min scores
 let generalScore = 0;
 let maxScore = 0;
@@ -322,7 +321,73 @@ const OptimizationCalculator = () => {
     };
   };
 
-  console.log(selectedAnswers);
+  // Export results to a CSV file
+  const exportToCSV = () => {
+    if (!results) return;
+
+    const csvRows = [
+      ["Category", "Score"],
+      ...Object.entries(results).map(([category, score]) => [
+        category,
+        score.toFixed(2),
+      ]),
+      ["Maximum Possible", maxScore],
+      ["Minimum Possible", minScore],
+      ["Obtained Score", generalScore],
+      ["Rating", base10Score],
+    ];
+
+    const csvContent = csvRows.map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    saveAs(blob, "results.csv");
+  };
+
+  // Export results to a JSON file
+  const exportToJSON = () => {
+    if (!results) return;
+
+    const data = {
+      results,
+      maxScore,
+      minScore,
+      generalScore,
+      rating: base10Score,
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json",
+    });
+    saveAs(blob, "results.json");
+  };
+
+  // Export results to a Markdown file
+  const exportToMarkdown = () => {
+    if (!results) return;
+
+    const markdownRows = Object.entries(results)
+        .map(
+            ([category, score]) =>
+                `- **${category}**: ${score.toFixed(2)} Points`
+        )
+        .join("\n");
+
+    const markdownContent = `
+# Results Report
+
+## Detailed Scores
+${markdownRows}
+
+## Summary
+- **Maximum Possible**: ${maxScore} Points
+- **Minimum Possible**: ${minScore} Points
+- **Obtained Score**: ${generalScore} Points
+- **Rating**: ${base10Score}/10
+    `;
+
+    const blob = new Blob([markdownContent], { type: "text/markdown" });
+    saveAs(blob, "results.md");
+  };
+
   return (
       <Container maxWidth="md">
         <Typography variant="h4" gutterBottom align="center">
@@ -373,7 +438,7 @@ const OptimizationCalculator = () => {
                             }
                             label={aspect.description}
                         />
-                        {/* Show corresponding aspect value with colors */}
+                        {/* Display aspect value */}
                         <Typography
                             variant="body2"
                             sx={{
@@ -425,10 +490,18 @@ const OptimizationCalculator = () => {
 
         {results && (
             <>
-              <CircularProgressWithLabel
-                  value={base10Score}
-                  color={scoreColors[Math.trunc(base10Score) - 1]}
-              />
+              <Box sx={{
+                display: 'flex' ,
+                flexDirection: 'row',
+                justifyContent: 'center',
+                alignItems: 'center',
+                margin: '0 0 40px 0',
+              }}>
+                <CircularProgressWithLabel
+                    value={base10Score}
+                    color={scoreColors[Math.trunc(base10Score) - 1]}
+                />
+              </Box>
               <Box>
                 <Typography variant="h5" gutterBottom>
                   Normalized Score Report
@@ -480,6 +553,23 @@ const OptimizationCalculator = () => {
               <Divider sx={{ my: 4 }} />
               <Box mt={4}>
                 <Line data={generateChartData()} options={options} />
+              </Box>
+              <Box
+                  mt={4}
+                  display="flex"
+                  justifyContent="center"
+                  flexWrap="wrap"
+                  gap={2}
+              >
+                <Button variant="contained" onClick={exportToCSV}>
+                  Export to CSV
+                </Button>
+                <Button variant="contained" onClick={exportToJSON}>
+                  Export to JSON
+                </Button>
+                <Button variant="contained" onClick={exportToMarkdown}>
+                  Export to Markdown
+                </Button>
               </Box>
             </>
         )}
