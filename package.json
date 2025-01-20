@@ -1,4 +1,5 @@
 {
+  "homepage": "https://fernando-espinosa-clip.github.io/score_calculator",
   "dependencies": {
     "@emotion/react": "11.14.0",
     "@emotion/styled": "11.14.0",
@@ -14,11 +15,15 @@
     "react-dom": "18.3.1",
     "typescript": "5.7.3"
   },
+  "name": "score_calculator",
   "description": "Evaluate projects under specific criteria, facilitating the identification of strengths and weaknesses in a visual and accessible environment",
   "devDependencies": {
+    "gh-pages": "^6.3.0",
     "react-scripts": "5.0.1"
   },
   "main": "index.tsx",
+  "predeploy": "yarn run build",
+  "deploy": "gh-pages -d build",
   "scripts": {
     "build": "react-scripts build",
     "eject": "react-scripts eject",
