@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.js": "/score-calculator/static/js/main.c2af07a2.js",
-    "index.html": "/score-calculator/index.html",
-    "main.c2af07a2.js.map": "/score-calculator/static/js/main.c2af07a2.js.map"
+    "main.js": "/Score-Calculator/static/js/main.c2af07a2.js",
+    "index.html": "/Score-Calculator/index.html",
+    "main.c2af07a2.js.map": "/Score-Calculator/static/js/main.c2af07a2.js.map"
   },
   "entrypoints": [
     "static/js/main.c2af07a2.js"
