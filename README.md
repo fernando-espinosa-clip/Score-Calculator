@@ -1,5 +1,5 @@
 # Score-Calculator
-
+Go to [description](description.md)
 Welcome to the **Score-Calculator** repository!  
 It is an interactive tool developed in React that allows you to evaluate and calculate the optimization of a project in different categories based on predefined criteria. Below is a summary of its functionality:
 
