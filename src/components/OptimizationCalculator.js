@@ -28,7 +28,7 @@ import {
 } from "chart.js";
 
 import CircularProgressWithLabel from "./CircularProgressWithLabel";
-import { scoreColors } from "./utils";
+import { scoreColors } from "../helpers/utils";
 
 // Registrar elementos para Chart.js
 ChartJS.register(
