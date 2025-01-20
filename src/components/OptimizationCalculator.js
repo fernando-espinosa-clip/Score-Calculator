@@ -30,16 +30,16 @@ import {
 import CircularProgressWithLabel from "./CircularProgressWithLabel";
 import { scoreColors } from "../helpers/utils";
 
-// Registrar elementos para Chart.js
+// Register Chart.js components
 ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend
 );
 
 export const options = {
@@ -50,310 +50,269 @@ export const options = {
     },
     title: {
       display: true,
-      text: "Puntos Optimizador",
+      text: "Optimization Points",
     },
   },
 };
 
-// Configuración de criterios
-const criterios = [
+// Configuration for evaluation criteria
+const criteria = [
   {
-    categoria: "Service Workers",
-    importancia: 4, // Muy importante
-    maximo: 5,
-    minimo: -3,
-    aspectos: [
-      { descripcion: "No esta implementado", valor: -3 },
-      { descripcion: "Están configurados en Webpack", valor: 2 },
+    category: "Service Workers",
+    importance: 4, // Very important
+    max: 5,
+    min: -3,
+    aspects: [
+      { description: "Not implemented", value: -3 },
+      { description: "Configured in Webpack", value: 2 },
       {
-        descripcion: "Tiene archivos de configuración para manejo de cache",
-        valor: 2,
+        description: "Contains configuration files for cache handling",
+        value: 2,
       },
-      { descripcion: "Está implementado", valor: 3 },
+      { description: "Implemented", value: 3 },
     ],
   },
   {
-    categoria: "Design System",
-    importancia: 4, // Muy importante
-    maximo: 2,
-    minimo: -3,
-    aspectos: [
-      { descripcion: "No tiene librería de DS de Clip", valor: 0 },
-      { descripcion: "Maneja una librería de DS de Clip", valor: 2 },
-      { descripcion: "Maneja dos librerías de DS de Clip", valor: -2 },
-      { descripcion: "Maneja tres librerías de DS de Clip", valor: -3 },
+    category: "Design System",
+    importance: 4, // Very important
+    max: 2,
+    min: -3,
+    aspects: [
+      { description: "Does not have Clip's DS library", value: 0 },
+      { description: "Uses one of Clip's DS libraries", value: 2 },
+      { description: "Uses two of Clip's DS libraries", value: -2 },
+      { description: "Uses three of Clip's DS libraries", value: -3 },
     ],
   },
   {
-    categoria: "Librería de Iconos",
-    importancia: 3, //Importante
-    maximo: 0,
-    minimo: -3,
-    aspectos: [
-      { descripcion: "No tiene librería de Iconos", valor: 0 },
-      { descripcion: "Tiene una librería de Iconos", valor: 0 },
-      { descripcion: "Tiene dos librerías de Iconos", valor: -2 },
-      { descripcion: "Tiene tres librerías de Iconos", valor: -3 },
+    category: "Icon Libraries",
+    importance: 3, // Important
+    max: 0,
+    min: -3,
+    aspects: [
+      { description: "Does not have an icon library", value: 0 },
+      { description: "Has one icon library", value: 0 },
+      { description: "Has two icon libraries", value: -2 },
+      { description: "Has three icon libraries", value: -3 },
     ],
   },
   {
-    categoria: "Librerías de Estilos",
-    importancia: 3, //Importante
-    maximo: 2,
-    minimo: -3,
-    aspectos: [
-      { descripcion: "Maneja una librería de estilos", valor: 2 },
-      { descripcion: "Maneja dos librerías de estilos", valor: -2 },
-      { descripcion: "Maneja tres librerías de estilos", valor: -3 },
+    category: "Style Libraries",
+    importance: 3, // Important
+    max: 2,
+    min: -3,
+    aspects: [
+      { description: "Uses one style library", value: 2 },
+      { description: "Uses two style libraries", value: -2 },
+      { description: "Uses three style libraries", value: -3 },
     ],
   },
   {
-    categoria: "Librerías extras de MUI",
-    importancia: 3, // Importante
-    maximo: 0,
-    minimo: -4,
-    aspectos: [
-      { descripcion: "Ninguna", valor: 0 },
-      { descripcion: "Tiene la librería System", valor: -2 },
-      { descripcion: "Tiene la librería Labs", valor: -2 },
+    category: "Extra MUI Libraries",
+    importance: 3, // Important
+    max: 0,
+    min: -4,
+    aspects: [
+      { description: "None", value: 0 },
+      { description: "Uses the System library", value: -2 },
+      { description: "Uses the Labs library", value: -2 },
     ],
   },
   {
-    categoria: "Librerías de manejo de llamadas asíncronas y cache",
-    importancia: 4, // Muy importante
-    maximo: 2,
-    minimo: -2,
-    aspectos: [
-      { descripcion: "No tiene librería", valor: -2 },
+    category: "Libraries for Async Calls & Caching",
+    importance: 4, // Very important
+    max: 2,
+    min: -2,
+    aspects: [
+      { description: "Does not use a library", value: -2 },
       {
-        descripcion: "Tiene librería pero no la tiene implementada",
-        valor: -2,
+        description: "Has a library but not implemented",
+        value: -2,
       },
-      { descripcion: "Tiene librería y está implementada", valor: 2 },
+      { description: "Has a library and is implemented", value: 2 },
     ],
   },
   {
-    categoria: "Librerías de router",
-    importancia: 4, // Muy importante
-    maximo: 2,
-    minimo: -3,
-    aspectos: [
+    category: "Router Libraries",
+    importance: 4, // Very important
+    max: 2,
+    min: -3,
+    aspects: [
       {
-        descripcion: "Implementa rutas en la aplicación mediana/grande",
-        valor: 2,
+        description: "Implements routes in medium/large applications",
+        value: 2,
       },
       {
-        descripcion: "No implementa rutas en aplicación mediana/grande",
-        valor: -2,
+        description: "Does not implement routes in medium/large applications",
+        value: -2,
       },
-      { descripcion: "No implementa rutas en aplicación pequeña", valor: 0 },
+      { description: "No routes for small applications", value: 0 },
       {
-        descripcion: "Utiliza librerías que no son react-router o NextJS",
-        valor: -2,
-      },
-    ],
-  },
-  {
-    categoria: "Versión de React",
-    importancia: 1, // Poco importante
-    maximo: 2,
-    minimo: -2,
-    aspectos: [
-      { descripcion: "16", valor: -2 },
-      { descripcion: "17", valor: 2 },
-      { descripcion: "18", valor: 2 },
-      { descripcion: "19", valor: -2 },
-    ],
-  },
-  {
-    categoria: "Code Split",
-    importancia: 3, // Importante
-    maximo: 2,
-    minimo: -3,
-    aspectos: [
-      { descripcion: "Utiliza React lazy y suspense", valor: 2 },
-      { descripcion: "Utiliza Loadable Components", valor: 2 },
-      { descripcion: "Utiliza en exceso el code split", valor: -2 },
-      {
-        descripcion: "No utiliza code split en aplicación mediana/grande",
-        valor: -2,
+        description: "Uses libraries other than react-router or NextJS",
+        value: -2,
       },
     ],
   },
   {
-    categoria: "Fuentes tipográficas web",
-    importancia: 4, // Muy importante
-    maximo: 4,
-    minimo: -3,
-    aspectos: [
-      { descripcion: "Utiliza una fuente", valor: 2 },
-      { descripcion: "Utiliza dos fuentes", valor: -2 },
-      { descripcion: "Utiliza tres fuentes", valor: -3 },
+    category: "React Version",
+    importance: 1, // Less important
+    max: 2,
+    min: -2,
+    aspects: [
+      { description: "16", value: -2 },
+      { description: "17", value: 2 },
+      { description: "18", value: 2 },
+      { description: "19", value: -2 },
+    ],
+  },
+  {
+    category: "Code Splitting",
+    importance: 3, // Important
+    max: 2,
+    min: -3,
+    aspects: [
+      { description: "Uses React lazy and suspense", value: 2 },
+      { description: "Uses Loadable Components", value: 2 },
+      { description: "Overuses code splitting", value: -2 },
       {
-        descripcion:
-          "Utiliza preconnect y prefetch en la fuente principal en el HTML",
-        valor: 2,
+        description: "Does not use code splitting in medium/large applications",
+        value: -2,
       },
     ],
   },
   {
-    categoria: "Optimización de imágenes",
-    importancia: 4, // Muy importante
-    maximo: 2,
-    minimo: -2,
-    aspectos: [
-      { descripcion: "Optimizadas", valor: 2 },
-      { descripcion: "No optimizadas", valor: -2 },
-    ],
-  },
-  {
-    categoria: "Optimización de fuentes tipográficas",
-    importancia: 3, // Importante
-    maximo: 3,
-    minimo: -2,
-    aspectos: [
-      { descripcion: "Optimizadas", valor: 3 },
-      { descripcion: "No optimizadas", valor: -2 },
-    ],
-  },
-  {
-    categoria: "Optimización de bundle de la aplicación",
-    importancia: 4, // Muy importante
-    maximo: 4,
-    minimo: -4,
-    aspectos: [
-      { descripcion: "Comprime con Gzip", valor: 2 },
-      { descripcion: "Comprime con Brotli", valor: 2 },
-      { descripcion: "No comprime con Gzip", valor: -2 },
-      { descripcion: "No comprime con Brotli", valor: -2 },
-    ],
-  },
-  {
-    categoria: "Obtiene datos comunes desde el contenedor",
-    importancia: 3, // Importante
-    maximo: 2,
-    minimo: -2,
-    aspectos: [
-      { descripcion: "Obtiene datos comunes desde APIs", valor: -2 },
-      { descripcion: "Obtiene datos comunes desde el contenedor", valor: 2 },
-    ],
-  },
-  {
-    categoria: "Manejo de headers de caché en Amplify para assets estáticos",
-    importancia: 4, // Muy importante
-    maximo: 2,
-    minimo: -2,
-    aspectos: [
-      { descripcion: "Sí tiene configuración de caché", valor: 2 },
-      { descripcion: "No tiene configuración de caché", valor: -2 },
+    category: "Web Fonts",
+    importance: 4, // Very important
+    max: 4,
+    min: -3,
+    aspects: [
+      { description: "Uses one font", value: 2 },
+      { description: "Uses two fonts", value: -2 },
+      { description: "Uses three fonts", value: -3 },
+      {
+        description:
+            "Uses preconnect and prefetch for the main font in the HTML",
+        value: 2,
+      },
     ],
   },
 ];
 
-let puntuacionGeneral = 0;
-let puntuacionMaxima = 0;
-let puntuacionMinima = 0;
-let puntuacionBase10 = 0;
 
-const calcularValorNuevaEscala = (
-  valor,
-  minimo,
-  maximo,
-  minimoNuevaEscala = 0,
-  maximoNuevaEscala = 10
+// Variables for general, max, and min scores
+let generalScore = 0;
+let maxScore = 0;
+let minScore = 0;
+let base10Score = 0;
+
+// Utility function to normalize values to a new scale
+const calculateNewScaleValue = (
+    value,
+    min,
+    max,
+    newScaleMin = 0,
+    newScaleMax = 10
 ) =>
-  minimoNuevaEscala +
-  ((valor - minimo) * maximoNuevaEscala) / (maximo - minimo);
+    newScaleMin +
+    ((value - min) * newScaleMax) / (max - min);
 
-const CalculadoraOptimizacion = () => {
-  const [respuestasSeleccionadas, setRespuestasSeleccionadas] = useState({});
-  const [errores, setErrores] = useState([]);
-  const [resultados, setResultados] = useState(null); // Resultados finales normalizados
+const OptimizationCalculator = () => {
+  // Hook to manage selected answers
+  const [selectedAnswers, setSelectedAnswers] = useState({});
+  // Hook to manage errors (missing categories)
+  const [errors, setErrors] = useState([]);
+  // Hook to store the final normalized results by category
+  const [results, setResults] = useState(null);
 
-  // Manejar las selecciones del usuario
-  const manejarSeleccion = (categoria, descripcion, checked) => {
-    setRespuestasSeleccionadas((prevState) => {
-      const respuestasPorCategoria = prevState[categoria] || [];
+  // Handle user selections for each category and aspect
+  const handleSelection = (category, description, checked) => {
+    setSelectedAnswers((prevState) => {
+      const answersPerCategory = prevState[category] || [];
       if (checked) {
         return {
           ...prevState,
-          [categoria]: [...respuestasPorCategoria, descripcion],
+          [category]: [...answersPerCategory, description],
         };
       } else {
         return {
           ...prevState,
-          [categoria]: respuestasPorCategoria.filter(
-            (respuesta) => respuesta !== descripcion
+          [category]: answersPerCategory.filter(
+              (answer) => answer !== description
           ),
         };
       }
     });
   };
 
-  // Calcular puntuación total y por categoría
-  const calcularPuntuacion = () => {
-    puntuacionGeneral = 0;
-    puntuacionMaxima = 0;
-    puntuacionMinima = 0;
-    puntuacionBase10 = 0;
+  // Calculate total, maximum, and minimum scores
+  const calculateScore = () => {
+    generalScore = 0;
+    maxScore = 0;
+    minScore = 0;
+    base10Score = 0;
 
-    const categoriasSinSeleccion = criterios
-      .filter((criterio) => {
-        const respuestas = respuestasSeleccionadas[criterio.categoria] || [];
-        return respuestas.length === 0;
-      })
-      .map((criterio) => criterio.categoria);
+    // Identify unselected categories
+    const unselectedCategories = criteria
+        .filter((criterion) => {
+          const answers = selectedAnswers[criterion.category] || [];
+          return answers.length === 0;
+        })
+        .map((criterion) => criterion.category);
 
-    if (categoriasSinSeleccion.length > 0) {
-      setErrores(categoriasSinSeleccion);
+    // If there are unselected categories, display errors
+    if (unselectedCategories.length > 0) {
+      setErrors(unselectedCategories);
       return;
     }
 
-    setErrores([]);
+    // Reset errors if all categories are selected
+    setErrors([]);
 
-    const resultadosPorCategoria = {};
+    const resultsByCategory = {};
 
-    criterios.forEach((criterio) => {
-      const respuestas = respuestasSeleccionadas[criterio.categoria] || [];
-      const subtotal = respuestas.reduce((acc, respuesta) => {
-        const aspecto = criterio.aspectos.find(
-          (a) => a.descripcion === respuesta
+    // Process each criterion
+    criteria.forEach((criterion) => {
+      const answers = selectedAnswers[criterion.category] || [];
+      const subtotal = answers.reduce((acc, answer) => {
+        const aspect = criterion.aspects.find(
+            (a) => a.description === answer
         );
-        return acc + (aspecto ? aspecto.valor : 0);
+        return acc + (aspect ? aspect.value : 0);
       }, 0);
 
-      // Aplicar límites
-      const subtotalTruncado =
-        Math.max(criterio.minimo, Math.min(criterio.maximo, subtotal)) *
-        criterio.importancia;
+      // Apply score limits (min and max)
+      const truncatedSubtotal =
+          Math.max(criterion.min, Math.min(criterion.max, subtotal)) *
+          criterion.importance;
 
-      // Guardar resultados de la categoría
-      resultadosPorCategoria[criterio.categoria] = subtotalTruncado;
-      puntuacionGeneral += subtotalTruncado;
-      puntuacionMaxima += criterio.maximo * criterio.importancia;
-      puntuacionMinima += criterio.minimo * criterio.importancia;
+      // Save results per category
+      resultsByCategory[criterion.category] = truncatedSubtotal;
+      generalScore += truncatedSubtotal;
+      maxScore += criterion.max * criterion.importance;
+      minScore += criterion.min * criterion.importance;
     });
 
-    puntuacionBase10 = calcularValorNuevaEscala(
-      puntuacionGeneral,
-      puntuacionMinima,
-      puntuacionMaxima
+    // Normalize the general score to a 0-10 scale
+    base10Score = calculateNewScaleValue(
+        generalScore,
+        minScore,
+        maxScore
     ).toFixed(2);
-    setResultados(resultadosPorCategoria);
+    setResults(resultsByCategory);
   };
 
-  // Preparar datos para la gráfica
-  const generarDatosGrafica = () => {
-    if (!resultados) return null;
+  // Prepare chart data for visualization
+  const generateChartData = () => {
+    if (!results) return null;
 
-    const labels = Object.keys(resultados);
-    const data = Object.values(resultados);
+    const labels = Object.keys(results);
+    const data = Object.values(results);
 
     return {
       labels,
       datasets: [
         {
-          label: "Puntos",
+          label: "Points",
           data,
           backgroundColor: "rgba(75, 192, 192, 0.6)",
           borderColor: "rgba(75, 192, 192, 1)",
@@ -363,172 +322,169 @@ const CalculadoraOptimizacion = () => {
     };
   };
 
-  console.log(respuestasSeleccionadas);
+  console.log(selectedAnswers);
   return (
-    <Container maxWidth="md">
-      <Typography variant="h4" gutterBottom align="center">
-        Calculadora de Optimización del Proyecto
-      </Typography>
-      <Box>
-        {criterios.map((criterio) => (
-          <Paper elevation={3} key={criterio.categoria} sx={{ p: 2, my: 2 }}>
-            <Typography variant="h6">
-              {criterio.categoria}
-              <Typography
-                variant="body2"
-                component="span"
-                sx={{ fontWeight: "normal", ml: 2 }}
-              >
-                <strong>[Pondera x{criterio.importancia}]</strong> - (Máximo:{" "}
-                {criterio.maximo}, Mínimo: {criterio.minimo})
+      <Container maxWidth="md">
+        <Typography variant="h4" gutterBottom align="center">
+          Project Optimization Calculator
+        </Typography>
+        <Box>
+          {criteria.map((criterion) => (
+              <Paper elevation={3} key={criterion.category} sx={{ p: 2, my: 2 }}>
+                <Typography variant="h6">
+                  {criterion.category}
+                  <Typography
+                      variant="body2"
+                      component="span"
+                      sx={{ fontWeight: "normal", ml: 2 }}
+                  >
+                    <strong>[Weight x{criterion.importance}]</strong> - (Max:{" "}
+                    {criterion.max}, Min: {criterion.min})
+                  </Typography>
+                </Typography>
+                <FormControl component="fieldset">
+                  {criterion.aspects.map((aspect) => (
+                      <Box
+                          key={aspect.description}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                            bgcolor: "background.default",
+                          }}
+                      >
+                        {/* Checkbox for user selection */}
+                        <FormControlLabel
+                            control={
+                              <Checkbox
+                                  checked={
+                                      selectedAnswers[criterion.category]?.includes(
+                                          aspect.description
+                                      ) || false
+                                  }
+                                  onChange={(e) =>
+                                      handleSelection(
+                                          criterion.category,
+                                          aspect.description,
+                                          e.target.checked
+                                      )
+                                  }
+                              />
+                            }
+                            label={aspect.description}
+                        />
+                        {/* Show corresponding aspect value with colors */}
+                        <Typography
+                            variant="body2"
+                            sx={{
+                              fontWeight: "bold",
+                              color:
+                                  aspect.value > 0
+                                      ? "green"
+                                      : aspect.value < 0
+                                          ? "red"
+                                          : "gray",
+                            }}
+                        >
+                          {aspect.value > 0
+                              ? `+${aspect.value}`
+                              : `${aspect.value}`}
+                        </Typography>
+                      </Box>
+                  ))}
+                </FormControl>
+              </Paper>
+          ))}
+        </Box>
+
+        <Divider sx={{ my: 4 }} />
+
+        {errors.length > 0 && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              <Typography variant="body1">
+                Please select at least one option in the following categories:
               </Typography>
-            </Typography>
-            <FormControl component="fieldset">
-              {criterio.aspectos.map((aspecto) => (
-                <Box
-                  key={aspecto.descripcion}
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    bgcolor: "background.default",
-                  }}
-                >
-                  {/* Checkbox y descripción */}
-                  <FormControlLabel
-                    control={
-                      <Checkbox
-                        checked={
-                          respuestasSeleccionadas[criterio.categoria]?.includes(
-                            aspecto.descripcion
-                          ) || false
-                        }
-                        onChange={(e) =>
-                          manejarSeleccion(
-                            criterio.categoria,
-                            aspecto.descripcion,
-                            e.target.checked
-                          )
-                        }
-                      />
-                    }
-                    label={aspecto.descripcion}
-                  />
-                  {/* Valor resaltado */}
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontWeight: "bold",
-                      color:
-                        aspecto.valor > 0
-                          ? "green"
-                          : aspecto.valor < 0
-                          ? "red"
-                          : "gray",
-                    }}
-                  >
-                    {aspecto.valor > 0
-                      ? `+${aspecto.valor}`
-                      : `${aspecto.valor}`}
-                  </Typography>
-                </Box>
-              ))}
-            </FormControl>
-          </Paper>
-        ))}
-      </Box>
+              <ul>
+                {errors.map((category) => (
+                    <li key={category}>{category}</li>
+                ))}
+              </ul>
+            </Alert>
+        )}
 
-      <Divider sx={{ my: 4 }} />
+        <Box textAlign="center" mb={4}>
+          <Button
+              variant="contained"
+              color="primary"
+              onClick={calculateScore}
+          >
+            Calculate Normalized Score
+          </Button>
+        </Box>
+        <Divider sx={{ my: 4 }} />
 
-      {errores.length > 0 && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          <Typography variant="body1">
-            Por favor selecciona al menos una opción en las siguientes
-            categorías:
-          </Typography>
-          <ul>
-            {errores.map((categoria) => (
-              <li key={categoria}>{categoria}</li>
-            ))}
-          </ul>
-        </Alert>
-      )}
-
-      <Box textAlign="center" mb={4}>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={calcularPuntuacion}
-        >
-          Calcular Puntuación Normalizada
-        </Button>
-      </Box>
-      <Divider sx={{ my: 4 }} />
-
-      {resultados && (
-        <>
-          <CircularProgressWithLabel
-            value={puntuacionBase10}
-            color={scoreColors[Math.trunc(puntuacionBase10) - 1]}
-          />
-          <Box>
-            <Typography variant="h5" gutterBottom>
-              Reporte de Calificaciones Normalizadas
-            </Typography>
-            <ul>
-              {Object.entries(resultados).map(([categoria, calificacion]) => (
-                <li key={categoria}>
-                  <Typography variant="body1">
-                    <strong>{categoria}: </strong> {calificacion.toFixed(2)}{" "}
-                    Puntos
-                  </Typography>
-                </li>
-              ))}
-            </ul>
-            <Divider sx={{ my: 4 }} />
-            <ul>
-              <li>
-                <Typography variant="body1">
-                  <strong>Maxima posible: </strong> {puntuacionMaxima} Puntos
+        {results && (
+            <>
+              <CircularProgressWithLabel
+                  value={base10Score}
+                  color={scoreColors[Math.trunc(base10Score) - 1]}
+              />
+              <Box>
+                <Typography variant="h5" gutterBottom>
+                  Normalized Score Report
                 </Typography>
-              </li>
-              <li>
-                <Typography variant="body1">
-                  <strong>Minima posible: </strong> {puntuacionMinima} Puntos
-                </Typography>
-              </li>
-              <li>
-                <Typography variant="body1">
-                  <strong>Puntuacion obtenida : </strong> {puntuacionGeneral}{" "}
-                  Puntos
-                </Typography>
-              </li>
-              <li>
-                <Typography variant="body1">
-                  <strong>Calificacion :</strong>{" "}
-                  <Typography
-                    component="strong"
-                    sx={{
-                      color: scoreColors[Math.trunc(puntuacionBase10 - 1)],
-                      fontWeight: "bold",
-                    }}
-                  >
-                    {" "}
-                    {puntuacionBase10}
-                  </Typography>
-                  /10
-                </Typography>
-              </li>
-            </ul>
-          </Box>
-          <Divider sx={{ my: 4 }} />
-          <Box mt={4}>
-            <Line data={generarDatosGrafica()} options={options} />
-          </Box>
-        </>
-      )}
-    </Container>
+                <ul>
+                  {Object.entries(results).map(([category, score]) => (
+                      <li key={category}>
+                        <Typography variant="body1">
+                          <strong>{category}: </strong> {score.toFixed(2)} Points
+                        </Typography>
+                      </li>
+                  ))}
+                </ul>
+                <Divider sx={{ my: 4 }} />
+                <ul>
+                  <li>
+                    <Typography variant="body1">
+                      <strong>Maximum Possible: </strong> {maxScore} Points
+                    </Typography>
+                  </li>
+                  <li>
+                    <Typography variant="body1">
+                      <strong>Minimum Possible: </strong> {minScore} Points
+                    </Typography>
+                  </li>
+                  <li>
+                    <Typography variant="body1">
+                      <strong>Obtained Score: </strong> {generalScore} Points
+                    </Typography>
+                  </li>
+                  <li>
+                    <Typography variant="body1">
+                      <strong>Rating:</strong>{" "}
+                      <Typography
+                          component="strong"
+                          sx={{
+                            color: scoreColors[Math.trunc(base10Score - 1)],
+                            fontWeight: "bold",
+                          }}
+                      >
+                        {" "}
+                        {base10Score}
+                      </Typography>
+                      /10
+                    </Typography>
+                  </li>
+                </ul>
+              </Box>
+              <Divider sx={{ my: 4 }} />
+              <Box mt={4}>
+                <Line data={generateChartData()} options={options} />
+              </Box>
+            </>
+        )}
+      </Container>
   );
 };
 
-export default CalculadoraOptimizacion;
+export default OptimizationCalculator;
