@@ -1,21 +1,21 @@
 {
   "dependencies": {
-    "@emotion/react": "latest",
-    "@emotion/styled": "latest",
-    "@mui/icons-material": "latest",
-    "@mui/material": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "typescript": "latest",
-    "file-saver": "2.0.5",
+    "@emotion/react": "11.14.0",
+    "@emotion/styled": "11.14.0",
+    "@mui/icons-material": "6.4.0",
+    "@mui/material": "6.4.0",
+    "@types/react": "18.3.18",
+    "@types/react-dom": "18.3.5",
     "chart.js": "4.4.7",
-    "react-chartjs-2": "5.3.0"
+    "file-saver": "2.0.5",
+    "react": "18.3.1",
+    "react-chartjs-2": "5.3.0",
+    "react-dom": "18.3.1",
+    "typescript": "5.7.3"
   },
-  "description": "https://github.com/mui/material-ui/blob/v5.16.8/docs/data/material/components/chips/IconChips.tsx",
+  "description": "Evaluate projects under specific criteria, facilitating the identification of strengths and weaknesses in a visual and accessible environment",
   "devDependencies": {
-    "react-scripts": "latest"
+    "react-scripts": "5.0.1"
   },
   "main": "index.tsx",
   "scripts": {
