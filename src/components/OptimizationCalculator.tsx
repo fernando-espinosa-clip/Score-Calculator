@@ -4,20 +4,22 @@ import {
   Typography,
   Box,
   Divider,
-  Alert,
   Button,
+  TextField,
 } from "@mui/material";
 
 import CircularProgressWithLabel from "./CircularProgressWithLabel";
 import { scoreColors } from "../helpers/utils";
-import { generateChartData, calculateResults } from "../helpers/calculationUtils";
+import { calculateResults } from "../helpers/calculationUtils";
 import { exportToCSV, exportToJSON, exportToMarkdown } from "../helpers/exportUtils";
 import CriteriaForm from "./CriteriaForm";
 import LineChart from "./LineChart";
+import ValidationDialog from "./ValidationDialog"; // Importamos el nuevo componente
 
 import { criteriaData } from "../data/criteriaData"; // Importamos los criterios
 
 const OptimizationCalculator: React.FC = () => {
+  const [projectName, setProjectName] = useState<string>(""); // Nuevo estado para guardar el nombre del proyecto
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, string[]>>({});
   const [errors, setErrors] = useState<string[]>([]);
   const [results, setResults] = useState<Record<string, number> | null>(null);
@@ -25,6 +27,24 @@ const OptimizationCalculator: React.FC = () => {
   const [maxScore, setMaxScore] = useState<number>(0);
   const [minScore, setMinScore] = useState<number>(0);
   const [base10Score, setBase10Score] = useState<string>("0");
+  const [showModal, setShowModal] = useState<boolean>(false); // Nueva variable para controlar el estado del diálogo modal
+  const [modalMessage, setModalMessage] = useState<string>(""); // Nuevo estado para el mensaje dentro del diálogo modal
+
+  // Maneja los cambios en el campo del nombre del proyecto
+  const handleProjectNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setProjectName(event.target.value);
+  };
+
+  // Valida el nombre del proyecto antes de realizar cálculos o exportaciones
+  const validateProjectName = (): boolean => {
+    if (projectName.trim().length < 5) {
+      setModalMessage("⚠️ The project name is required and must be at least 5 characters long.");
+      setErrors([]); // No hay errores en categorías aquí
+      setShowModal(true); // Muestra el diálogo modal en caso de error
+      return false;
+    }
+    return true;
+  };
 
   // Maneja los cambios en las selecciones del usuario
   const handleSelection = (category: string, description: string, checked: boolean) => {
@@ -45,11 +65,17 @@ const OptimizationCalculator: React.FC = () => {
 
   // Calcula los puntajes
   const calculateScore = () => {
+    if (!validateProjectName()) {
+      return;
+    }
+
     const { general, max, min, normalizedScore, categoryResults, unselectedCategories } =
         calculateResults(criteriaData, selectedAnswers);
 
     if (unselectedCategories.length > 0) {
-      setErrors(unselectedCategories);
+      setModalMessage("⚠️ Please select at least one option in the following categories:");
+      setErrors(unselectedCategories); // Carga las categorías vacías
+      setShowModal(true);
       return;
     }
 
@@ -60,14 +86,25 @@ const OptimizationCalculator: React.FC = () => {
     setMinScore(min ?? 0);
     setBase10Score(normalizedScore ? normalizedScore.toFixed(2) : "0");
   };
-  if (results) {
-    console.log(generateChartData(results))
-  }
+
   return (
       <Container maxWidth="md">
         <Typography variant="h4" gutterBottom align="center">
           Project Optimization Calculator
         </Typography>
+
+        {/* Campo de texto para ingresar el nombre del proyecto */}
+        <Box sx={{ my: 4 }}>
+          <TextField
+              fullWidth
+              label="Project Name"
+              variant="outlined"
+              value={projectName}
+              onChange={handleProjectNameChange}
+              helperText="Enter the name of your project for reference."
+          />
+        </Box>
+
         <Box>
           <CriteriaForm
               criteria={criteriaData}
@@ -77,17 +114,6 @@ const OptimizationCalculator: React.FC = () => {
         </Box>
 
         <Divider sx={{ my: 4 }} />
-
-        {errors.length > 0 && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              <Typography>Please select at least one option in the following categories:</Typography>
-              <ul>
-                {errors.map((category) => (
-                    <li key={category}>{category}</li>
-                ))}
-              </ul>
-            </Alert>
-        )}
 
         <Box textAlign="center" mb={4}>
           <Button variant="contained" color="primary" onClick={calculateScore}>
@@ -132,7 +158,10 @@ const OptimizationCalculator: React.FC = () => {
                 <li>
                   <Typography>
                     <strong>Rating:</strong>{" "}
-                    <Typography component="span" sx={{ fontWeight: "bold", color: scoreColors[Math.trunc(parseFloat(base10Score)) - 1] }}>
+                    <Typography
+                        component="span"
+                        sx={{ fontWeight: "bold", color: scoreColors[Math.trunc(parseFloat(base10Score)) - 1] }}
+                    >
                       {base10Score}
                     </Typography>
                     /10
@@ -140,21 +169,68 @@ const OptimizationCalculator: React.FC = () => {
                 </li>
               </ul>
               <Box mt={4}>
-              <LineChart results={results} />
+                <LineChart results={results} />
               </Box>
               <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 4 }}>
-                <Button variant="contained" onClick={() => exportToCSV({ results, generalScore, maxScore, minScore, base10Score})}>
+                <Button
+                    variant="contained"
+                    onClick={() =>
+                        validateProjectName() &&
+                        exportToCSV({
+                          projectName,
+                          results,
+                          generalScore,
+                          maxScore,
+                          minScore,
+                          base10Score,
+                        })
+                    }
+                >
                   Export to CSV
                 </Button>
-                <Button variant="contained" onClick={() => exportToJSON({results, generalScore, maxScore, minScore, base10Score})}>
+                <Button
+                    variant="contained"
+                    onClick={() =>
+                        validateProjectName() &&
+                        exportToJSON({
+                          projectName,
+                          results,
+                          generalScore,
+                          maxScore,
+                          minScore,
+                          base10Score,
+                        })
+                    }
+                >
                   Export to JSON
                 </Button>
-                <Button variant="contained" onClick={() => exportToMarkdown({results, generalScore, maxScore, minScore, base10Score})}>
+                <Button
+                    variant="contained"
+                    onClick={() =>
+                        validateProjectName() &&
+                        exportToMarkdown({
+                          projectName,
+                          results,
+                          generalScore,
+                          maxScore,
+                          minScore,
+                          base10Score,
+                        })
+                    }
+                >
                   Export to Markdown
                 </Button>
               </Box>
             </>
         )}
+
+        {/* Usamos el componente ValidationDialog */}
+        <ValidationDialog
+            open={showModal}
+            onClose={() => setShowModal(false)}
+            message={modalMessage}
+            errors={errors}
+        />
       </Container>
   );
 };
