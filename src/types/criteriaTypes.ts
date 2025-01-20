@@ -10,3 +10,9 @@ export type Criteria = {
     min: number;           // Puntuación mínima permitida
     aspects: Aspect[];     // Lista de aspectos asociados a la categoría
 };
+
+/**
+ * Define un conjunto de datos de criterios.
+ * Es una lista de objetos de tipo Criteria.
+ */
+export type CriteriaData = Criteria[];
