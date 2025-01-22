@@ -1,6 +1,5 @@
 import { CriteriaData } from "../types/criteriaTypes";
 
-
 // Configuration for evaluation criteria
 export const criteriaData: CriteriaData = [
     {
@@ -140,6 +139,61 @@ export const criteriaData: CriteriaData = [
                     "Uses preconnect and prefetch for the main font in the HTML",
                 value: 2,
             },
+        ],
+    },
+    // New added criteria
+    {
+        category: "Image Optimization",
+        importance: 4, // Very important
+        max: 2,
+        min: -2,
+        aspects: [
+            { description: "Optimized", value: 2 },
+            { description: "Not optimized", value: -2 },
+        ],
+    },
+    {
+        category: "Font File Optimization",
+        importance: 3, // Important
+        max: 2,
+        min: -2,
+        aspects: [
+            { description: "Optimized", value: 2 },
+            { description: "Not optimized", value: -2 },
+        ],
+    },
+    {
+        category: "Application Webpack Bundle Optimization",
+        importance: 4, // Very important
+        max: 4,
+        min: -7,
+        aspects: [
+            { description: "Compressed with Gzip", value: 2 },
+            { description: "Compressed with Brotli", value: 2 },
+            { description: "Not compressed with Gzip", value: -2 },
+            { description: "Not compressed with Brotli", value: -2 },
+            { description: "The final application bundle has repeated or unoptimized references to npm packages.", value: -3 },
+        ],
+    },
+    {
+        category: "Common Data Retrieval from Container",
+        importance: 3, // Important
+        max: 2,
+        min: -2,
+        aspects: [
+            { description: "Does not apply", value: 0 },
+            { description: "Retrieves common data from APIs", value: -2 },
+            { description: "Retrieves common data from the container", value: 2 },
+        ],
+    },
+    {
+        category: "Cache Headers Management in Amplify for Static Assets",
+        importance: 4, // Very important
+        max: 2,
+        min: -2,
+        aspects: [
+            { description: "Has cache configuration", value: 2 },
+            { description: "No cache configuration", value: -2 },
         ],
     },
 ];
