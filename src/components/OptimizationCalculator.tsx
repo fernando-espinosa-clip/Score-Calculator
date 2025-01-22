@@ -173,53 +173,56 @@ const OptimizationCalculator: React.FC = () => {
               </Box>
               <Box sx={{ display: "flex", justifyContent: "center", gap: 2, mt: 4 }}>
                 <Button
-                    variant="contained"
-                    onClick={() =>
-                        validateProjectName() &&
-                        exportToCSV({
-                          projectName,
-                          results,
-                          generalScore,
-                          maxScore,
-                          minScore,
-                          base10Score,
-                        })
-                    }
-                >
+                  variant="contained"
+                  onClick={() =>
+                    validateProjectName() &&
+                    exportToCSV({
+                      projectName,
+                      results,
+                      generalScore,
+                      maxScore,
+                      minScore,
+                      base10Score,
+                      selectedAnswers, // Añade las respuestas seleccionadas
+                    })
+                }
+                  >
                   Export to CSV
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={() =>
-                        validateProjectName() &&
-                        exportToJSON({
-                          projectName,
-                          results,
-                          generalScore,
-                          maxScore,
-                          minScore,
-                          base10Score,
-                        })
-                    }
-                >
-                  Export to JSON
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={() =>
-                        validateProjectName() &&
-                        exportToMarkdown({
-                          projectName,
-                          results,
-                          generalScore,
-                          maxScore,
-                          minScore,
-                          base10Score,
-                        })
-                    }
-                >
-                  Export to Markdown
-                </Button>
+              </Button>
+              <Button
+                  variant="contained"
+                  onClick={() =>
+                      validateProjectName() &&
+                      exportToJSON({
+                        projectName,
+                        results,
+                        generalScore,
+                        maxScore,
+                        minScore,
+                        base10Score,
+                        selectedAnswers, // Añade las respuestas seleccionadas
+                      })
+                  }
+              >
+                Export to JSON
+              </Button>
+              <Button
+                  variant="contained"
+                  onClick={() =>
+                      validateProjectName() &&
+                      exportToMarkdown({
+                        projectName,
+                        results,
+                        generalScore,
+                        maxScore,
+                        minScore,
+                        base10Score,
+                        selectedAnswers, // Añade las respuestas seleccionadas
+                      })
+                  }
+              >
+                Export to Markdown
+              </Button>
               </Box>
             </>
         )}
