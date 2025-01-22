@@ -181,19 +181,30 @@ export const criteriaData: CriteriaData = [
         max: 2,
         min: -2,
         aspects: [
-            { description: "Does not apply", value: 0 },
+            { description: "Does not apply", value: 2 },
             { description: "Retrieves common data from APIs", value: -2 },
             { description: "Retrieves common data from the container", value: 2 },
         ],
     },
     {
-        category: "Cache Headers Management in Amplify for Static Assets",
+        category: "Cache Headers Management in Amplify for Static Assets (IAC)",
         importance: 4, // Very important
         max: 2,
         min: -2,
         aspects: [
             { description: "Has cache configuration", value: 2 },
             { description: "No cache configuration", value: -2 },
+        ],
+    },
+    {
+        category: "It has CSP policies configured in the Amplify headers. (IAC)",
+        importance: 4, // Very important
+        max: 2,
+        min: -2,
+        aspects: [
+            { description: "Does not apply", value: 2 },
+            { description: "Has CSP configuration", value: 2 },
+            { description: "No CSP configuration", value: -2 },
         ],
     },
 ];
