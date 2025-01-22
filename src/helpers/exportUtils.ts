@@ -1,4 +1,3 @@
-import { ExportResultsData } from "../types/exportTypes";
 import { saveAs } from "file-saver";
 
 // Exporta los resultados a un archivo CSV
