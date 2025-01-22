@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/Score-Calculator/static/js/main.376d4831.js",
+    "main.js": "/Score-Calculator/static/js/main.bf080b46.js",
     "index.html": "/Score-Calculator/index.html",
-    "main.376d4831.js.map": "/Score-Calculator/static/js/main.376d4831.js.map"
+    "main.bf080b46.js.map": "/Score-Calculator/static/js/main.bf080b46.js.map"
   },
   "entrypoints": [
-    "static/js/main.376d4831.js"
+    "static/js/main.bf080b46.js"
   ]
 }
