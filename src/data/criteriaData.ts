@@ -59,6 +59,7 @@ export const criteriaData: CriteriaData = [
         min: -4,
         aspects: [
             { description: "None", value: 0 },
+            { description: "Uses the Styles library", value: -2 },
             { description: "Uses the System library", value: -2 },
             { description: "Uses the Labs library", value: -2 },
         ],
