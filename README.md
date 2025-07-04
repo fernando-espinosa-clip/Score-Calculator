@@ -73,6 +73,12 @@ Follow the steps below to clone and start the project on your local environment:
 
 4. Open your browser at `http://localhost:3000` to see the application in action.
 
+## Performance Analysis
+
+This repository includes a GitHub Action that automatically analyzes the performance of your application when a pull request is created. It injects an `access_token` cookie before each evaluation and provides a summary of the results as a comment on the pull request.
+
+For more information, see [Performance Analysis Documentation](PERFORMANCE_ANALYSIS.md).
+
 ## Contributions
 
 Contributions are welcome! If you find any issues or have improvements in mind, feel free to open an [Issue](https://github.com/your-user/Score-Calculator/issues) or submit a pull request.
