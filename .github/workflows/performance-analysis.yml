@@ -89,9 +89,16 @@ jobs:
             echo "Using report: $REPORT_PATH"
 
             # Extract scores
+            PERFORMANCE=$(jq '.categories.performance.score' $REPORT_PATH)
             ACCESSIBILITY=$(jq '.categories.accessibility.score' $REPORT_PATH)
             BEST_PRACTICES=$(jq '.categories["best-practices"].score' $REPORT_PATH)
             SEO=$(jq '.categories.seo.score' $REPORT_PATH)
+
+            # Save scores to a file for later use
+            echo "PERFORMANCE=$PERFORMANCE" > lighthouse-scores.txt
+            echo "ACCESSIBILITY=$ACCESSIBILITY" >> lighthouse-scores.txt
+            echo "BEST_PRACTICES=$BEST_PRACTICES" >> lighthouse-scores.txt
+            echo "SEO=$SEO" >> lighthouse-scores.txt
 
             # Check if scores are below 0.8 but above 0.5
             if (( $(echo "$ACCESSIBILITY < 0.8 && $ACCESSIBILITY >= 0.5" | bc -l) )); then
@@ -107,10 +114,54 @@ jobs:
             fi
           else
             echo "No Lighthouse report found"
+            # Create empty scores file with default values
+            echo "PERFORMANCE=N/A" > lighthouse-scores.txt
+            echo "ACCESSIBILITY=N/A" >> lighthouse-scores.txt
+            echo "BEST_PRACTICES=N/A" >> lighthouse-scores.txt
+            echo "SEO=N/A" >> lighthouse-scores.txt
           fi
 
       - name: Generate Performance Report
         run: |
+          # Load scores from file
+          if [ -f "lighthouse-scores.txt" ]; then
+            source lighthouse-scores.txt
+          else
+            PERFORMANCE="N/A"
+            ACCESSIBILITY="N/A"
+            BEST_PRACTICES="N/A"
+            SEO="N/A"
+          fi
+
+          # Format scores as percentages
+          if [ "$PERFORMANCE" != "N/A" ]; then
+            PERFORMANCE_PCT=$(echo "$PERFORMANCE * 100" | bc)
+            PERFORMANCE_PCT="${PERFORMANCE_PCT%.*}%"
+          else
+            PERFORMANCE_PCT="N/A"
+          fi
+
+          if [ "$ACCESSIBILITY" != "N/A" ]; then
+            ACCESSIBILITY_PCT=$(echo "$ACCESSIBILITY * 100" | bc)
+            ACCESSIBILITY_PCT="${ACCESSIBILITY_PCT%.*}%"
+          else
+            ACCESSIBILITY_PCT="N/A"
+          fi
+
+          if [ "$BEST_PRACTICES" != "N/A" ]; then
+            BEST_PRACTICES_PCT=$(echo "$BEST_PRACTICES * 100" | bc)
+            BEST_PRACTICES_PCT="${BEST_PRACTICES_PCT%.*}%"
+          else
+            BEST_PRACTICES_PCT="N/A"
+          fi
+
+          if [ "$SEO" != "N/A" ]; then
+            SEO_PCT=$(echo "$SEO * 100" | bc)
+            SEO_PCT="${SEO_PCT%.*}%"
+          else
+            SEO_PCT="N/A"
+          fi
+
           echo "# Performance Analysis Results" > performance-report.md
           echo "" >> performance-report.md
           echo "## URLs Analyzed" >> performance-report.md
@@ -118,7 +169,12 @@ jobs:
           echo "- Local build: http://localhost:3000/?page=results" >> performance-report.md
           echo "" >> performance-report.md
           echo "## Scores" >> performance-report.md
-          echo "The detailed scores can be found in the Lighthouse CI report." >> performance-report.md
+          echo "| Category | Score |" >> performance-report.md
+          echo "| -------- | ----- |" >> performance-report.md
+          echo "| Performance | $PERFORMANCE_PCT |" >> performance-report.md
+          echo "| Accessibility | $ACCESSIBILITY_PCT |" >> performance-report.md
+          echo "| Best Practices | $BEST_PRACTICES_PCT |" >> performance-report.md
+          echo "| SEO | $SEO_PCT |" >> performance-report.md
           echo "" >> performance-report.md
           echo "## Thresholds" >> performance-report.md
           echo "- Performance: Error if below 0.8" >> performance-report.md
