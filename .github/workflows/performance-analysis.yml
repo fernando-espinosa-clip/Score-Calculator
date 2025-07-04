@@ -18,11 +18,16 @@ jobs:
         with:
           node-version: '18'
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.6.0
+
       - name: Install dependencies
-        run: yarn install
+        run: pnpm install
 
       - name: Build project
-        run: yarn build
+        run: pnpm build
 
       - name: Install serve
         run: npm install -g serve
