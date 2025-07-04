@@ -1,13 +1,15 @@
 # Performance Analysis GitHub Action
 
-This GitHub Action automatically analyzes the performance of your application when a pull request is created, synchronized, or reopened. It injects an `access_token` cookie before each evaluation and provides a summary of the results as a comment on the pull request.
+This GitHub Action automatically analyzes the performance of your application when a pull request is created, synchronized, or reopened. It builds your project locally using the code from the PR branch, sets up a local server to serve the built files, injects an `access_token` cookie before each evaluation, and provides a summary of the results as a comment on the pull request.
 
 ## How It Works
 
 1. When a pull request is created, synchronized, or reopened, the action is triggered.
-2. It uses Lighthouse CI to analyze the specified URLs with the `access_token` cookie injected.
-3. It generates a performance report with scores for performance, accessibility, best practices, and SEO.
-4. It comments on the pull request with the results.
+2. It checks out the code from the PR branch and builds the project locally.
+3. It sets up a local server to serve the built files.
+4. It uses Lighthouse CI to analyze the local build with the `access_token` cookie injected.
+5. It generates a performance report with scores for performance, accessibility, best practices, and SEO.
+6. It comments on the pull request with the results.
 
 ## Setup
 
@@ -27,12 +29,12 @@ To add these secrets:
 
 ### 2. Customize URLs
 
-By default, the action analyzes the following URLs:
+By default, the action analyzes the following URLs on the local server:
 
-- `https://fernando-espinosa-clip.github.io/Score-Calculator/`
-- `https://fernando-espinosa-clip.github.io/Score-Calculator/?page=results`
+- `http://localhost:3000/`
+- `http://localhost:3000/?page=results`
 
-You can customize these URLs by editing the `lighthouserc.json` configuration in the `.github/workflows/performance-analysis.yml` file.
+You can customize these URLs by editing the `lighthouserc.json` configuration in the `.github/workflows/performance-analysis.yml` file. Note that these URLs should point to the local server that's serving your built application.
 
 ### 3. Customize Performance Thresholds
 
@@ -47,17 +49,19 @@ You can customize the performance thresholds by editing the `assertions` section
 
 The action will comment on the pull request with a summary of the results, including:
 
-- The URLs that were analyzed
+- The local URLs that were analyzed
 - A link to the detailed Lighthouse CI report
-- A summary of the analysis
+- A summary of the analysis indicating that the tests were run on the local build of the PR branch
 
 ## Troubleshooting
 
 If you encounter any issues with the action, check the following:
 
 1. Make sure the `ACCESS_TOKEN` secret is properly set up.
-2. Make sure the URLs are accessible from the GitHub Actions runner.
-3. Check the action logs for any error messages.
+2. Make sure the local server is running correctly. Check the action logs for any errors related to starting the server.
+3. Make sure the build process completed successfully. Check the action logs for any build errors.
+4. Make sure the URLs are correctly pointing to the local server.
+5. Check the action logs for any error messages from Lighthouse CI.
 
 ## Further Customization
 
