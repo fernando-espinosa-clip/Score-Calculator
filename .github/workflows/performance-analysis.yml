@@ -38,6 +38,16 @@ jobs:
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli
 
+      - name: Check if secret is set
+        run: |
+          if [ -z "${{ secrets.PERSONAL_ACCESS_TOKEN }}" ]; then
+            echo "El secreto no está configurado."
+          else
+            echo "El secreto está configurado: longitud (${#MI_SECRETO}) caracteres."
+          fi
+        env:
+          MI_SECRETO: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
       - name: Create Lighthouse configuration
         run: |
           cat > lighthouserc.json << 'EOL'
@@ -138,13 +148,3 @@ jobs:
         with:
           name: lighthouse-reports
           path: .lighthouseci/*
-
-      - name: Check if secret is set
-        run: |
-          if [ -z "${{ secrets.PERSONAL_ACCESS_TOKEN }}" ]; then
-            echo "El secreto no está configurado."
-          else
-            echo "El secreto está configurado: longitud (${#MI_SECRETO}) caracteres."
-          fi
-        env:
-          MI_SECRETO: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
