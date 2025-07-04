@@ -33,7 +33,7 @@ jobs:
         run: npm install -g serve
 
       - name: Start local server
-        run: serve -s build &
+        run: serve -s dist &
 
       - name: Install Lighthouse CI
         run: npm install -g @lhci/cli

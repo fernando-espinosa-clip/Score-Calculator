@@ -1,4 +1,7 @@
 node_modules
 .yarn
 .idea
-build
+dist
+.vite
+*.local
+/build/
