@@ -138,3 +138,13 @@ jobs:
         with:
           name: lighthouse-reports
           path: .lighthouseci/*
+
+      - name: Check if secret is set
+        run: |
+          if [ -z "${{ secrets.PERSONAL_ACCESS_TOKEN }}" ]; then
+            echo "El secreto no está configurado."
+          else
+            echo "El secreto está configurado: longitud (${#MI_SECRETO}) caracteres."
+          fi
+        env:
+          MI_SECRETO: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
