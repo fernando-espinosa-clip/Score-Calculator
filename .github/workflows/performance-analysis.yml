@@ -41,12 +41,13 @@ jobs:
       - name: Check if secret is set
         run: |
           if [ -z "${{ secrets.PERSONAL_ACCESS_TOKEN }}" ]; then
-            echo "El secreto no está configurado."
+            echo "El secreto no está configurado. ${MI_SECRETO} ${MI_NOMBRE}"
           else
             echo "El secreto está configurado: longitud (${#MI_SECRETO}) caracteres."
           fi
         env:
           MI_SECRETO: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          MI_NOMBRE: ${{ vars.MI_NOMBRE }}
 
       - name: Create Lighthouse configuration
         run: |
