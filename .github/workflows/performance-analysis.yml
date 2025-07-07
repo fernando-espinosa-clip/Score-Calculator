@@ -58,11 +58,11 @@ jobs:
             --header 'Accept: application/vnd.com.payclip.v1+json' \
             --header 'Content-Type: application/json' \
             --data-raw '{
-                "email": "$IAM_EMAIL",
-                "password": "$IAM_PASSWORD",
-                "source": "M_DASHBOARD",
-                "type": "LOGIN",
-                "expiration_time":"PT72H"
+                \"email\": \"$IAM_EMAIL\",
+                \"password\": \"REDACTED\",
+                \"source\": \"M_DASHBOARD\",
+                \"type\": \"LOGIN\",
+                \"expiration_time\":\"PT72H\"
             }'"
           echo "========================================"
 
@@ -97,8 +97,8 @@ jobs:
           echo "JWT_TOKEN=$JWT_TOKEN" >> $GITHUB_ENV
           echo "Successfully obtained JWT token"
         env:
-          IAM_EMAIL: ${{ secret.IAM_EMAIL }}
-          IAM_PASSWORD: ${{ secret.IAM_PASSWORD }}
+          IAM_EMAIL: ${{ secrets.IAM_EMAIL }}
+          IAM_PASSWORD: ${{ secrets.IAM_PASSWORD }}
 
       - name: Create Lighthouse configuration
         run: |
