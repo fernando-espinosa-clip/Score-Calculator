@@ -51,35 +51,10 @@ jobs:
 
       - name: Obtain JWT Token
         id: jwt
-        run: |
-          # Get JWT token from API
-          RESPONSE=$(curl --location 'https://dev-api.clip.mx/iam/user/login' \
-            --header 'Accept: application/vnd.com.payclip.v1+json' \
-            --header 'Content-Type: application/json' \
-            --data-raw '{
-                "email": "'"$IAM_EMAIL"'",
-                "password": "'"$IAM_PASSWORD"'",
-                "source": "M_DASHBOARD",
-                "type": "LOGIN",
-                "expiration_time":"PT72H"
-            }')
-
-          # Extract token from response
-          JWT_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
-
-          # Check if token was obtained successfully
-          if [ -z "$JWT_TOKEN" ] || [ "$JWT_TOKEN" == "null" ]; then
-            echo "Failed to obtain JWT token"
-            echo "$RESPONSE"
-            exit 1
-          fi
-
-          # Save token to environment variable for subsequent steps
-          echo "JWT_TOKEN=$JWT_TOKEN" >> $GITHUB_ENV
-          echo "Successfully obtained JWT token"
-        env:
-          IAM_EMAIL: ${{ secrets.IAM_EMAIL }}
-          IAM_PASSWORD: ${{ secrets.IAM_PASSWORD }}
+        uses: ./.github/actions/get-jwt-token
+        with:
+          iam_email: ${{ secrets.IAM_EMAIL }}
+          iam_password: ${{ secrets.IAM_PASSWORD }}
 
       - name: Create Lighthouse configuration
         run: |
