@@ -230,7 +230,7 @@ jobs:
           echo "This analysis was performed on the local build of the PR branch with a JWT token obtained from the API and injected as both an Authorization header and an access_token cookie before each evaluation." >> performance-report.md
 
           echo "## Lighthouse Report URL" >> performance-report.md
-          echo "The Lighthouse reports are available as artifacts in this workflow run. You can access them at:" >> performance-report.md
+          echo "The Lighthouse HTML reports are available as artifacts in this workflow run. Download the 'lighthouse-reports' artifact from the link below and open the HTML files to view the detailed Lighthouse reports:" >> performance-report.md
           echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> performance-report.md
 
       - name: Comment PR
