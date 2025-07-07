@@ -10,8 +10,6 @@ on:
     secrets:
       LHCI_GITHUB_APP_TOKEN:
         required: false
-      GITHUB_TOKEN:
-        required: false
     outputs:
       performance:
         description: "Performance score"

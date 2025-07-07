@@ -20,7 +20,6 @@ jobs:
       jwt_token: ${{ needs.get_jwt.outputs.jwt_token }}
     secrets:
       LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   report:
     name: Generate Report
