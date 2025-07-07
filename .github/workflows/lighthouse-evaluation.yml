@@ -1,0 +1,159 @@
+name: Lighthouse Evaluation
+
+on:
+  workflow_call:
+    inputs:
+      jwt_token:
+        required: true
+        type: string
+        description: "JWT token for authentication"
+    secrets:
+      LHCI_GITHUB_APP_TOKEN:
+        required: false
+      GITHUB_TOKEN:
+        required: false
+    outputs:
+      performance:
+        description: "Performance score"
+        value: ${{ jobs.evaluate.outputs.performance }}
+      accessibility:
+        description: "Accessibility score"
+        value: ${{ jobs.evaluate.outputs.accessibility }}
+      best_practices:
+        description: "Best Practices score"
+        value: ${{ jobs.evaluate.outputs.best_practices }}
+      seo:
+        description: "SEO score"
+        value: ${{ jobs.evaluate.outputs.seo }}
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    name: Run Lighthouse Evaluation
+    outputs:
+      performance: ${{ steps.check_scores.outputs.performance }}
+      accessibility: ${{ steps.check_scores.outputs.accessibility }}
+      best_practices: ${{ steps.check_scores.outputs.best_practices }}
+      seo: ${{ steps.check_scores.outputs.seo }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.6.0
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Install serve
+        run: npm install -g serve
+
+      - name: Start local server
+        run: serve -s dist &
+
+      - name: Install Lighthouse CI
+        run: npm install -g @lhci/cli
+
+      - name: Create Lighthouse configuration
+        run: |
+          cat > lighthouserc.json << EOL
+          {
+            "ci": {
+              "collect": {
+                "settings": {
+                  "output": ["json", "html"],
+                  "extraHeaders": {
+                    "Authorization": "Bearer ${JWT_TOKEN}"
+                  },
+                  "cookies": [
+                    {
+                      "name": "access_token",
+                      "value": "${JWT_TOKEN}",
+                      "domain": "localhost",
+                      "path": "/"
+                    }
+                  ]
+                },
+                "url": [
+                  "http://localhost:3000/"
+                ]
+              },
+              "upload": {
+                "target": "filesystem",
+                "outputDir": ".lighthouseci"
+              }
+            }
+          }
+          EOL
+        env:
+          JWT_TOKEN: ${{ inputs.jwt_token }}
+
+      - name: Run Lighthouse CI
+        id: lighthouse
+        run: lhci autorun || echo "lighthouse_failed=true" >> $GITHUB_OUTPUT
+        env:
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN || secrets.GITHUB_TOKEN }}
+          JWT_TOKEN: ${{ inputs.jwt_token }}
+
+      - name: Debug Lighthouse Output
+        run: |
+          echo "Lighthouse Output Directory:"
+          ls -l .lighthouseci
+
+      - name: Check Lighthouse Scores
+        id: check_scores
+        if: always()
+        run: |
+          if [ $(ls .lighthouseci/lhr-*.json 2>/dev/null | wc -l) -gt 0 ]; then
+            REPORT_PATH=$(ls -t .lighthouseci/lhr-*.json | head -n 1)
+            echo "Using report: $REPORT_PATH"
+
+            # Extract scores
+            PERFORMANCE=$(jq '.categories.performance.score' $REPORT_PATH)
+            ACCESSIBILITY=$(jq '.categories.accessibility.score' $REPORT_PATH)
+            BEST_PRACTICES=$(jq '.categories["best-practices"].score' $REPORT_PATH)
+            SEO=$(jq '.categories.seo.score' $REPORT_PATH)
+
+            # Set outputs for other workflows to use
+            echo "performance=$PERFORMANCE" >> $GITHUB_OUTPUT
+            echo "accessibility=$ACCESSIBILITY" >> $GITHUB_OUTPUT
+            echo "best_practices=$BEST_PRACTICES" >> $GITHUB_OUTPUT
+            echo "seo=$SEO" >> $GITHUB_OUTPUT
+
+            # Check if scores are below 0.8 but above 0.5
+            if (( $(echo "$ACCESSIBILITY < 0.8 && $ACCESSIBILITY >= 0.5" | bc -l) )); then
+              echo "::warning::Accessibility score is below 0.8: $ACCESSIBILITY"
+            fi
+
+            if (( $(echo "$BEST_PRACTICES < 0.8 && $BEST_PRACTICES >= 0.5" | bc -l) )); then
+              echo "::warning::Best Practices score is below 0.8: $BEST_PRACTICES"
+            fi
+
+            if (( $(echo "$SEO < 0.8 && $SEO >= 0.5" | bc -l) )); then
+              echo "::warning::SEO score is below 0.8: $SEO"
+            fi
+          else
+            echo "No Lighthouse report found"
+            # Set default values for outputs
+            echo "performance=N/A" >> $GITHUB_OUTPUT
+            echo "accessibility=N/A" >> $GITHUB_OUTPUT
+            echo "best_practices=N/A" >> $GITHUB_OUTPUT
+            echo "seo=N/A" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Lighthouse Reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/*
