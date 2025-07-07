@@ -229,6 +229,10 @@ jobs:
           echo "## Summary" >> performance-report.md
           echo "This analysis was performed on the local build of the PR branch with a JWT token obtained from the API and injected as both an Authorization header and an access_token cookie before each evaluation." >> performance-report.md
 
+          echo "## Lighthouse Report URL" >> performance-report.md
+          echo "The Lighthouse reports are available as artifacts in this workflow run. You can access them at:" >> performance-report.md
+          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> performance-report.md
+
       - name: Comment PR
         uses: actions/github-script@v6
         with:
