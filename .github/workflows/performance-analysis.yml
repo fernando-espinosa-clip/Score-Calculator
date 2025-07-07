@@ -58,11 +58,11 @@ jobs:
             --header 'Accept: application/vnd.com.payclip.v1+json' \
             --header 'Content-Type: application/json' \
             --data-raw '{
-                \"email\": \"$IAM_EMAIL\",
-                \"password\": \"$IAM_PASSWORD\",
-                \"source\": \"M_DARD\",
-                \"type\": \"LOGIN\",
-                \"expiration_time\": \"PT72H\"
+                "email": "$IAM_EMAIL",
+                "password": "$IAM_PASSWORD",
+                "source": "M_DASHBOARD",
+                "type": "LOGIN",
+                "expiration_time":"PT72H"
             }'"
           echo "========================================"
 
@@ -71,8 +71,8 @@ jobs:
             --header 'Accept: application/vnd.com.payclip.v1+json' \
             --header 'Content-Type: application/json' \
             --data-raw '{
-                "email": "hector.nicanor@payclip.com",
-                "password": "Clip2024!3",
+                "email": "$IAM_EMAIL",
+                "password": "$IAM_PASSWORD",
                 "source": "M_DASHBOARD",
                 "type": "LOGIN",
                 "expiration_time":"PT72H"
