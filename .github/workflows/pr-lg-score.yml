@@ -17,13 +17,19 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '9.6.0'
+          run_install: false
 
       - name: Install dependencies
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Build project
-        run: npm run build
+        run: pnpm build
 
       - name: Run Lighthouse Check
         id: lighthouse
@@ -37,7 +43,7 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const results = JSON.parse('${{ steps.lighthouse.outputs.results }}');
-            
+
             const formatScore = (score) => {
               const percentage = Math.round(score * 100);
               let emoji = '🔴';
@@ -45,7 +51,7 @@ jobs:
               else if (percentage >= 50) emoji = '🟠';
               return `${emoji} ${percentage}`;
             };
-            
+
             const tableRows = [
               '| Metric | Score |',
               '| ------ | ----- |',
@@ -55,9 +61,9 @@ jobs:
               `| SEO | ${formatScore(results.seo)} |`,
               `| PWA | ${formatScore(results.pwa)} |`
             ];
-            
+
             const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[Detailed HTML Report](${results.htmlReportUrl})`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

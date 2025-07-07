@@ -21,7 +21,7 @@ runs:
     - name: Start preview server
       shell: bash
       run: |
-        npm run preview &
+        pnpm preview &
         echo "Started preview server"
         # Wait for server to be ready
         sleep 5
@@ -29,7 +29,7 @@ runs:
     - name: Install Lighthouse
       shell: bash
       run: |
-        npm install -g @lhci/cli@0.12.x
+        pnpm add -g @lhci/cli@0.12.x
         echo "Installed Lighthouse CI"
 
     - name: Create output directory
@@ -58,14 +58,14 @@ runs:
         # Find the JSON report
         JSON_REPORT=$(find ./lighthouse-results -name "*.json" | head -n 1)
         HTML_REPORT=$(find ./lighthouse-results -name "*.html" | head -n 1)
-        
+
         # Extract key metrics
         PERFORMANCE=$(jq '.categories.performance.score' "$JSON_REPORT")
         ACCESSIBILITY=$(jq '.categories.accessibility.score' "$JSON_REPORT")
         BEST_PRACTICES=$(jq '.categories["best-practices"].score' "$JSON_REPORT")
         SEO=$(jq '.categories.seo.score' "$JSON_REPORT")
         PWA=$(jq '.categories.pwa.score' "$JSON_REPORT")
-        
+
         # Create results JSON
         RESULTS=$(jq -n \
           --arg performance "$PERFORMANCE" \
@@ -80,15 +80,15 @@ runs:
             seo: ($seo | tonumber),
             pwa: ($pwa | tonumber)
           }')
-        
+
         # Escape JSON for GitHub Actions
         RESULTS_ESCAPED=$(echo "$RESULTS" | jq -c -r @json)
         echo "results=$RESULTS_ESCAPED" >> $GITHUB_OUTPUT
-        
+
         # Copy reports to a more accessible location
         cp "$JSON_REPORT" ./lighthouse-report.json
         cp "$HTML_REPORT" ./lighthouse-report.html
-        
+
         echo "Results extracted and saved"
 
     - name: Upload artifacts
