@@ -1,0 +1,66 @@
+name: PR Lighthouse Score
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lighthouse-check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Run Lighthouse Check
+        id: lighthouse
+        uses: ./.github/actions/lighthouse-check
+        with:
+          url: 'http://localhost:4173'  # Default Vite preview URL
+
+      - name: Comment on PR with Lighthouse results
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const results = JSON.parse('${{ steps.lighthouse.outputs.results }}');
+            
+            const formatScore = (score) => {
+              const percentage = Math.round(score * 100);
+              let emoji = '🔴';
+              if (percentage >= 90) emoji = '🟢';
+              else if (percentage >= 50) emoji = '🟠';
+              return `${emoji} ${percentage}`;
+            };
+            
+            const tableRows = [
+              '| Metric | Score |',
+              '| ------ | ----- |',
+              `| Performance | ${formatScore(results.performance)} |`,
+              `| Accessibility | ${formatScore(results.accessibility)} |`,
+              `| Best Practices | ${formatScore(results.bestPractices)} |`,
+              `| SEO | ${formatScore(results.seo)} |`,
+              `| PWA | ${formatScore(results.pwa)} |`
+            ];
+            
+            const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[Detailed HTML Report](${results.htmlReportUrl})`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

@@ -1,0 +1,114 @@
+name: 'Lighthouse Check'
+description: 'Run Lighthouse on a local URL and provide performance metrics'
+
+inputs:
+  url:
+    description: 'URL to run Lighthouse against'
+    required: true
+    default: 'http://localhost:4173'
+
+outputs:
+  results:
+    description: 'JSON string containing Lighthouse results'
+    value: ${{ steps.extract-results.outputs.results }}
+  htmlReportUrl:
+    description: 'URL to the HTML report'
+    value: ${{ steps.upload-artifacts.outputs.html_report_url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Start preview server
+      shell: bash
+      run: |
+        npm run preview &
+        echo "Started preview server"
+        # Wait for server to be ready
+        sleep 5
+
+    - name: Install Lighthouse
+      shell: bash
+      run: |
+        npm install -g @lhci/cli@0.12.x
+        echo "Installed Lighthouse CI"
+
+    - name: Create output directory
+      shell: bash
+      run: |
+        mkdir -p ./lighthouse-results
+        echo "Created output directory"
+
+    - name: Run Lighthouse
+      shell: bash
+      run: |
+        lhci autorun \
+          --collect.url=${{ inputs.url }} \
+          --collect.settings.chromeFlags="--no-sandbox --headless" \
+          --collect.settings.formFactor="desktop" \
+          --collect.settings.screenEmulation.mobile=false \
+          --collect.numberOfRuns=1 \
+          --upload.target=filesystem \
+          --upload.outputDir=./lighthouse-results
+        echo "Lighthouse check completed"
+
+    - name: Extract results
+      id: extract-results
+      shell: bash
+      run: |
+        # Find the JSON report
+        JSON_REPORT=$(find ./lighthouse-results -name "*.json" | head -n 1)
+        HTML_REPORT=$(find ./lighthouse-results -name "*.html" | head -n 1)
+        
+        # Extract key metrics
+        PERFORMANCE=$(jq '.categories.performance.score' "$JSON_REPORT")
+        ACCESSIBILITY=$(jq '.categories.accessibility.score' "$JSON_REPORT")
+        BEST_PRACTICES=$(jq '.categories["best-practices"].score' "$JSON_REPORT")
+        SEO=$(jq '.categories.seo.score' "$JSON_REPORT")
+        PWA=$(jq '.categories.pwa.score' "$JSON_REPORT")
+        
+        # Create results JSON
+        RESULTS=$(jq -n \
+          --arg performance "$PERFORMANCE" \
+          --arg accessibility "$ACCESSIBILITY" \
+          --arg bestPractices "$BEST_PRACTICES" \
+          --arg seo "$SEO" \
+          --arg pwa "$PWA" \
+          '{
+            performance: ($performance | tonumber),
+            accessibility: ($accessibility | tonumber),
+            bestPractices: ($bestPractices | tonumber),
+            seo: ($seo | tonumber),
+            pwa: ($pwa | tonumber)
+          }')
+        
+        # Escape JSON for GitHub Actions
+        RESULTS_ESCAPED=$(echo "$RESULTS" | jq -c -r @json)
+        echo "results=$RESULTS_ESCAPED" >> $GITHUB_OUTPUT
+        
+        # Copy reports to a more accessible location
+        cp "$JSON_REPORT" ./lighthouse-report.json
+        cp "$HTML_REPORT" ./lighthouse-report.html
+        
+        echo "Results extracted and saved"
+
+    - name: Upload artifacts
+      id: upload-artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: lighthouse-results
+        path: |
+          ./lighthouse-report.json
+          ./lighthouse-report.html
+        retention-days: 14
+
+    - name: Set HTML report URL
+      id: set-html-url
+      shell: bash
+      run: |
+        echo "html_report_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}/artifacts" >> $GITHUB_OUTPUT
+
+    - name: Kill preview server
+      shell: bash
+      run: |
+        pkill -f "vite preview" || true
+        echo "Stopped preview server"
