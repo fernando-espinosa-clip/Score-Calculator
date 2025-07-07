@@ -21,10 +21,28 @@ jobs:
     secrets:
       LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
 
+  download_artifacts:
+    name: Download and Re-upload Artifacts
+    needs: lighthouse
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Lighthouse Reports from Called Workflow
+        uses: dawidd6/action-download-artifact@v2
+        with:
+          workflow: lighthouse-evaluation.yml
+          name: lighthouse-reports
+          path: .lighthouseci
+
+      - name: Upload Lighthouse Reports for Report Job
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: .lighthouseci/*
+
   report:
     name: Generate Report
     runs-on: ubuntu-latest
-    needs: [get_jwt, lighthouse]
+    needs: [get_jwt, lighthouse, download_artifacts]
     if: always()
     steps:
       - name: Checkout code
