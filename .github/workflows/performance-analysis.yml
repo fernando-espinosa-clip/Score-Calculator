@@ -97,8 +97,8 @@ jobs:
           echo "JWT_TOKEN=$JWT_TOKEN" >> $GITHUB_ENV
           echo "Successfully obtained JWT token"
         env:
-          IAM_EMAIL: ${{ vars.IAM_EMAIL }}
-          IAM_PASSWORD: ${{ vars.IAM_PASSWORD }}
+          IAM_EMAIL: ${{ secret.IAM_EMAIL }}
+          IAM_PASSWORD: ${{ secret.IAM_PASSWORD }}
 
       - name: Create Lighthouse configuration
         run: |
