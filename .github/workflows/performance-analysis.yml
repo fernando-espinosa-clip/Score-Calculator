@@ -163,14 +163,14 @@ jobs:
 
       - name: Run Lighthouse CI for Desktop
         id: lighthouse-desktop
-        run: lhci autorun --config=lighthouserc-desktop.json || echo "::set-output name=lighthouse_desktop_failed::true"
+        run: lhci autorun --config=lighthouserc-desktop.json || echo "lighthouse_desktop_failed=true" >> $GITHUB_OUTPUT
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN || secrets.GITHUB_TOKEN }}
           JWT_TOKEN: ${{ env.JWT_TOKEN }}
 
       - name: Run Lighthouse CI for Mobile
         id: lighthouse-mobile
-        run: lhci autorun --config=lighthouserc-mobile.json || echo "::set-output name=lighthouse_mobile_failed::true"
+        run: lhci autorun --config=lighthouserc-mobile.json || echo "lighthouse_mobile_failed=true" >> $GITHUB_OUTPUT
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN || secrets.GITHUB_TOKEN }}
           JWT_TOKEN: ${{ env.JWT_TOKEN }}
@@ -178,10 +178,72 @@ jobs:
       - name: Debug Lighthouse Output
         run: |
           echo "Lighthouse Desktop Output Directory:"
-          ls -l .lighthouseci/desktop
+          ls -la .lighthouseci/desktop
+
+          # Check if desktop JSON reports exist and show their details
+          if [ $(ls .lighthouseci/desktop/lhr-*.json 2>/dev/null | wc -l) -gt 0 ]; then
+            echo "Desktop JSON reports found:"
+            ls -la .lighthouseci/desktop/lhr-*.json
+
+            # Show file info for the most recent report
+            DESKTOP_REPORT=$(ls -t .lighthouseci/desktop/lhr-*.json | head -n 1)
+            echo "Most recent desktop report: $DESKTOP_REPORT"
+            echo "File size: $(du -h $DESKTOP_REPORT | cut -f1)"
+
+            # Check if the file is valid JSON
+            if jq empty $DESKTOP_REPORT 2>/dev/null; then
+              echo "Desktop report is valid JSON"
+              # Show the top-level keys in the JSON
+              echo "Top-level keys in desktop report:"
+              jq 'keys' $DESKTOP_REPORT
+
+              # Check if categories key exists
+              if jq -e '.categories' $DESKTOP_REPORT > /dev/null 2>&1; then
+                echo "Categories found in desktop report"
+                jq '.categories | keys' $DESKTOP_REPORT
+              else
+                echo "No categories found in desktop report"
+              fi
+            else
+              echo "Desktop report is not valid JSON"
+            fi
+          else
+            echo "No desktop JSON reports found"
+          fi
 
           echo "Lighthouse Mobile Output Directory:"
-          ls -l .lighthouseci/mobile
+          ls -la .lighthouseci/mobile
+
+          # Check if mobile JSON reports exist and show their details
+          if [ $(ls .lighthouseci/mobile/lhr-*.json 2>/dev/null | wc -l) -gt 0 ]; then
+            echo "Mobile JSON reports found:"
+            ls -la .lighthouseci/mobile/lhr-*.json
+
+            # Show file info for the most recent report
+            MOBILE_REPORT=$(ls -t .lighthouseci/mobile/lhr-*.json | head -n 1)
+            echo "Most recent mobile report: $MOBILE_REPORT"
+            echo "File size: $(du -h $MOBILE_REPORT | cut -f1)"
+
+            # Check if the file is valid JSON
+            if jq empty $MOBILE_REPORT 2>/dev/null; then
+              echo "Mobile report is valid JSON"
+              # Show the top-level keys in the JSON
+              echo "Top-level keys in mobile report:"
+              jq 'keys' $MOBILE_REPORT
+
+              # Check if categories key exists
+              if jq -e '.categories' $MOBILE_REPORT > /dev/null 2>&1; then
+                echo "Categories found in mobile report"
+                jq '.categories | keys' $MOBILE_REPORT
+              else
+                echo "No categories found in mobile report"
+              fi
+            else
+              echo "Mobile report is not valid JSON"
+            fi
+          else
+            echo "No mobile JSON reports found"
+          fi
 
       - name: Check Lighthouse Scores
         if: always()
@@ -194,11 +256,41 @@ jobs:
 
             echo "Using $device report: $report_path"
 
-            # Extract scores
-            local performance=$(jq '.categories.performance.score' $report_path)
-            local accessibility=$(jq '.categories.accessibility.score' $report_path)
-            local best_practices=$(jq '.categories["best-practices"].score' $report_path)
-            local seo=$(jq '.categories.seo.score' $report_path)
+            # First check if the file exists
+            if [ ! -f "$report_path" ]; then
+              echo "ERROR: Report file does not exist: $report_path"
+              return 1
+            fi
+
+            # Check if the file is valid JSON
+            if ! jq empty "$report_path" 2>/dev/null; then
+              echo "ERROR: Report file is not valid JSON: $report_path"
+              return 1
+            fi
+
+            # Check if the categories key exists
+            if ! jq -e '.categories' "$report_path" > /dev/null 2>&1; then
+              echo "ERROR: No 'categories' key found in report: $report_path"
+              echo "Report structure:"
+              jq '.' "$report_path"
+              return 1
+            fi
+
+            # Debug: Show the categories structure
+            echo "Categories structure in $device report:"
+            jq '.categories' "$report_path"
+
+            # Extract scores with error handling
+            local performance=$(jq -r '.categories.performance.score // "N/A"' "$report_path")
+            local accessibility=$(jq -r '.categories.accessibility.score // "N/A"' "$report_path")
+            local best_practices=$(jq -r '.categories["best-practices"].score // "N/A"' "$report_path")
+            local seo=$(jq -r '.categories.seo.score // "N/A"' "$report_path")
+
+            echo "$device scores extracted:"
+            echo "- Performance: $performance"
+            echo "- Accessibility: $accessibility"
+            echo "- Best Practices: $best_practices"
+            echo "- SEO: $seo"
 
             # Save scores to a file for later use
             echo "${device}_PERFORMANCE=$performance" > $output_file
@@ -206,24 +298,61 @@ jobs:
             echo "${device}_BEST_PRACTICES=$best_practices" >> $output_file
             echo "${device}_SEO=$seo" >> $output_file
 
-            # Check if scores are below 0.8 but above 0.5
-            if (( $(echo "$accessibility < 0.8 && $accessibility >= 0.5" | bc -l) )); then
-              echo "::warning::$device Accessibility score is below 0.8: $accessibility"
+            # Only check scores if they are numeric
+            if [[ "$performance" != "N/A" && "$performance" != "null" ]]; then
+              if (( $(echo "$performance < 0.8" | bc -l) )); then
+                echo "::warning::$device Performance score is below 0.8: $performance"
+              fi
             fi
 
-            if (( $(echo "$best_practices < 0.8 && $best_practices >= 0.5" | bc -l) )); then
-              echo "::warning::$device Best Practices score is below 0.8: $best_practices"
+            if [[ "$accessibility" != "N/A" && "$accessibility" != "null" ]]; then
+              if (( $(echo "$accessibility < 0.8 && $accessibility >= 0.5" | bc -l) )); then
+                echo "::warning::$device Accessibility score is below 0.8: $accessibility"
+              fi
             fi
 
-            if (( $(echo "$seo < 0.8 && $seo >= 0.5" | bc -l) )); then
-              echo "::warning::$device SEO score is below 0.8: $seo"
+            if [[ "$best_practices" != "N/A" && "$best_practices" != "null" ]]; then
+              if (( $(echo "$best_practices < 0.8 && $best_practices >= 0.5" | bc -l) )); then
+                echo "::warning::$device Best Practices score is below 0.8: $best_practices"
+              fi
+            fi
+
+            if [[ "$seo" != "N/A" && "$seo" != "null" ]]; then
+              if (( $(echo "$seo < 0.8 && $seo >= 0.5" | bc -l) )); then
+                echo "::warning::$device SEO score is below 0.8: $seo"
+              fi
             fi
           }
 
+          # Check if the .lighthouseci directory exists
+          if [ ! -d ".lighthouseci" ]; then
+            echo "ERROR: .lighthouseci directory does not exist"
+            mkdir -p .lighthouseci/desktop .lighthouseci/mobile
+          fi
+
+          # Check if the desktop directory exists
+          if [ ! -d ".lighthouseci/desktop" ]; then
+            echo "ERROR: .lighthouseci/desktop directory does not exist"
+            mkdir -p .lighthouseci/desktop
+          fi
+
           # Check desktop scores
-          if [ $(ls .lighthouseci/desktop/lhr-*.json 2>/dev/null | wc -l) -gt 0 ]; then
-            DESKTOP_REPORT_PATH=$(ls -t .lighthouseci/desktop/lhr-*.json | head -n 1)
-            extract_scores "DESKTOP" "$DESKTOP_REPORT_PATH" "lighthouse-desktop-scores.txt"
+          DESKTOP_REPORTS_COUNT=$(find .lighthouseci/desktop -name "lhr-*.json" 2>/dev/null | wc -l)
+          echo "Found $DESKTOP_REPORTS_COUNT desktop report(s)"
+
+          if [ $DESKTOP_REPORTS_COUNT -gt 0 ]; then
+            DESKTOP_REPORT_PATH=$(find .lighthouseci/desktop -name "lhr-*.json" -type f -print0 | xargs -0 ls -t | head -n 1)
+            echo "Processing desktop report: $DESKTOP_REPORT_PATH"
+
+            # Try to extract scores, but handle potential errors
+            if ! extract_scores "DESKTOP" "$DESKTOP_REPORT_PATH" "lighthouse-desktop-scores.txt"; then
+              echo "WARNING: Failed to extract desktop scores, using default values"
+              # Create empty scores file with default values
+              echo "DESKTOP_PERFORMANCE=N/A" > lighthouse-desktop-scores.txt
+              echo "DESKTOP_ACCESSIBILITY=N/A" >> lighthouse-desktop-scores.txt
+              echo "DESKTOP_BEST_PRACTICES=N/A" >> lighthouse-desktop-scores.txt
+              echo "DESKTOP_SEO=N/A" >> lighthouse-desktop-scores.txt
+            fi
           else
             echo "No Desktop Lighthouse report found"
             # Create empty scores file with default values
@@ -233,10 +362,29 @@ jobs:
             echo "DESKTOP_SEO=N/A" >> lighthouse-desktop-scores.txt
           fi
 
+          # Check if the mobile directory exists
+          if [ ! -d ".lighthouseci/mobile" ]; then
+            echo "ERROR: .lighthouseci/mobile directory does not exist"
+            mkdir -p .lighthouseci/mobile
+          fi
+
           # Check mobile scores
-          if [ $(ls .lighthouseci/mobile/lhr-*.json 2>/dev/null | wc -l) -gt 0 ]; then
-            MOBILE_REPORT_PATH=$(ls -t .lighthouseci/mobile/lhr-*.json | head -n 1)
-            extract_scores "MOBILE" "$MOBILE_REPORT_PATH" "lighthouse-mobile-scores.txt"
+          MOBILE_REPORTS_COUNT=$(find .lighthouseci/mobile -name "lhr-*.json" 2>/dev/null | wc -l)
+          echo "Found $MOBILE_REPORTS_COUNT mobile report(s)"
+
+          if [ $MOBILE_REPORTS_COUNT -gt 0 ]; then
+            MOBILE_REPORT_PATH=$(find .lighthouseci/mobile -name "lhr-*.json" -type f -print0 | xargs -0 ls -t | head -n 1)
+            echo "Processing mobile report: $MOBILE_REPORT_PATH"
+
+            # Try to extract scores, but handle potential errors
+            if ! extract_scores "MOBILE" "$MOBILE_REPORT_PATH" "lighthouse-mobile-scores.txt"; then
+              echo "WARNING: Failed to extract mobile scores, using default values"
+              # Create empty scores file with default values
+              echo "MOBILE_PERFORMANCE=N/A" > lighthouse-mobile-scores.txt
+              echo "MOBILE_ACCESSIBILITY=N/A" >> lighthouse-mobile-scores.txt
+              echo "MOBILE_BEST_PRACTICES=N/A" >> lighthouse-mobile-scores.txt
+              echo "MOBILE_SEO=N/A" >> lighthouse-mobile-scores.txt
+            fi
           else
             echo "No Mobile Lighthouse report found"
             # Create empty scores file with default values
@@ -251,36 +399,94 @@ jobs:
 
       - name: Generate Performance Report
         run: |
-          # Function to format scores as percentages
+          # Function to format scores as percentages with improved error handling
           format_score() {
             local score=$1
-            if [ "$score" != "N/A" ]; then
-              local pct=$(echo "$score * 100" | bc)
-              echo "${pct%.*}%"
-            else
+
+            # Check if score is N/A, null, or empty
+            if [[ "$score" == "N/A" || "$score" == "null" || -z "$score" ]]; then
               echo "N/A"
+              return
             fi
+
+            # Check if score is a valid number
+            if ! echo "$score" | grep -E '^[0-9]+(\.[0-9]+)?$' > /dev/null; then
+              echo "Error: Invalid score format: '$score'"
+              echo "N/A"
+              return
+            fi
+
+            # Convert to percentage
+            local pct=$(echo "$score * 100" | bc)
+            echo "${pct%.*}%"
           }
 
-          # Load desktop scores
+          echo "Loading score files..."
+
+          # Load desktop scores with error handling
           if [ -f "lighthouse-desktop-scores.txt" ]; then
+            echo "Desktop scores file found"
+            cat lighthouse-desktop-scores.txt
             source lighthouse-desktop-scores.txt
+
+            # Validate loaded variables
+            if [[ -z "$DESKTOP_PERFORMANCE" ]]; then
+              echo "Warning: DESKTOP_PERFORMANCE not found in scores file"
+              DESKTOP_PERFORMANCE="N/A"
+            fi
+            if [[ -z "$DESKTOP_ACCESSIBILITY" ]]; then
+              echo "Warning: DESKTOP_ACCESSIBILITY not found in scores file"
+              DESKTOP_ACCESSIBILITY="N/A"
+            fi
+            if [[ -z "$DESKTOP_BEST_PRACTICES" ]]; then
+              echo "Warning: DESKTOP_BEST_PRACTICES not found in scores file"
+              DESKTOP_BEST_PRACTICES="N/A"
+            fi
+            if [[ -z "$DESKTOP_SEO" ]]; then
+              echo "Warning: DESKTOP_SEO not found in scores file"
+              DESKTOP_SEO="N/A"
+            fi
           else
+            echo "No desktop scores file found"
             DESKTOP_PERFORMANCE="N/A"
             DESKTOP_ACCESSIBILITY="N/A"
             DESKTOP_BEST_PRACTICES="N/A"
             DESKTOP_SEO="N/A"
           fi
 
-          # Load mobile scores
+          # Load mobile scores with error handling
           if [ -f "lighthouse-mobile-scores.txt" ]; then
+            echo "Mobile scores file found"
+            cat lighthouse-mobile-scores.txt
             source lighthouse-mobile-scores.txt
+
+            # Validate loaded variables
+            if [[ -z "$MOBILE_PERFORMANCE" ]]; then
+              echo "Warning: MOBILE_PERFORMANCE not found in scores file"
+              MOBILE_PERFORMANCE="N/A"
+            fi
+            if [[ -z "$MOBILE_ACCESSIBILITY" ]]; then
+              echo "Warning: MOBILE_ACCESSIBILITY not found in scores file"
+              MOBILE_ACCESSIBILITY="N/A"
+            fi
+            if [[ -z "$MOBILE_BEST_PRACTICES" ]]; then
+              echo "Warning: MOBILE_BEST_PRACTICES not found in scores file"
+              MOBILE_BEST_PRACTICES="N/A"
+            fi
+            if [[ -z "$MOBILE_SEO" ]]; then
+              echo "Warning: MOBILE_SEO not found in scores file"
+              MOBILE_SEO="N/A"
+            fi
           else
+            echo "No mobile scores file found"
             MOBILE_PERFORMANCE="N/A"
             MOBILE_ACCESSIBILITY="N/A"
             MOBILE_BEST_PRACTICES="N/A"
             MOBILE_SEO="N/A"
           fi
+
+          echo "Desktop scores: $DESKTOP_PERFORMANCE, $DESKTOP_ACCESSIBILITY, $DESKTOP_BEST_PRACTICES, $DESKTOP_SEO"
+          echo "Mobile scores: $MOBILE_PERFORMANCE, $MOBILE_ACCESSIBILITY, $MOBILE_BEST_PRACTICES, $MOBILE_SEO"
 
           # Format desktop scores
           DESKTOP_PERFORMANCE_PCT=$(format_score "$DESKTOP_PERFORMANCE")
@@ -342,10 +548,43 @@ jobs:
               body: report
             });
 
+      - name: Prepare Lighthouse Reports for Upload
+        if: always()
+        run: |
+          # Ensure directories exist
+          mkdir -p .lighthouseci/desktop .lighthouseci/mobile
+
+          # Check if directories have content
+          DESKTOP_FILES=$(find .lighthouseci/desktop -type f | wc -l)
+          MOBILE_FILES=$(find .lighthouseci/mobile -type f | wc -l)
+
+          echo "Found $DESKTOP_FILES files in desktop directory"
+          echo "Found $MOBILE_FILES files in mobile directory"
+
+          # Create a README file if directories are empty
+          if [ $DESKTOP_FILES -eq 0 ]; then
+            echo "No Lighthouse reports found for desktop" > .lighthouseci/desktop/README.txt
+          fi
+
+          if [ $MOBILE_FILES -eq 0 ]; then
+            echo "No Lighthouse reports found for mobile" > .lighthouseci/mobile/README.txt
+          fi
+
+          # Create a summary file
+          echo "# Lighthouse Reports Summary" > .lighthouseci/summary.txt
+          echo "Desktop reports: $DESKTOP_FILES" >> .lighthouseci/summary.txt
+          echo "Mobile reports: $MOBILE_FILES" >> .lighthouseci/summary.txt
+
+          # List all files for verification
+          echo "All files to be uploaded:"
+          find .lighthouseci -type f | sort
+
       - name: Upload Lighthouse Reports
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: lighthouse-reports
           path: |
-            .lighthouseci/desktop/*
-            .lighthouseci/mobile/*
+            .lighthouseci/desktop/
+            .lighthouseci/mobile/
+            .lighthouseci/summary.txt
