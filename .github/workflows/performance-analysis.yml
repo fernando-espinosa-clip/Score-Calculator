@@ -52,20 +52,6 @@ jobs:
       - name: Obtain JWT Token
         id: jwt
         run: |
-          # TEMPORARY DEBUG CODE - Will be removed later
-          echo "==== DEBUG: CURL COMMAND STRUCTURE ===="
-          echo "curl --location 'https://dev-api.clip.mx/iam/user/login' \
-            --header 'Accept: application/vnd.com.payclip.v1+json' \
-            --header 'Content-Type: application/json' \
-            --data-raw '{
-                \"email\": \"$IAM_EMAIL\",
-                \"password\": \"REDACTED\",
-                \"source\": \"M_DASHBOARD\",
-                \"type\": \"LOGIN\",
-                \"expiration_time\":\"PT72H\"
-            }'"
-          echo "========================================"
-
           # Get JWT token from API
           RESPONSE=$(curl --location 'https://dev-api.clip.mx/iam/user/login' \
             --header 'Accept: application/vnd.com.payclip.v1+json' \
@@ -77,11 +63,6 @@ jobs:
                 "type": "LOGIN",
                 "expiration_time":"PT72H"
             }')
-
-          # TEMPORARY DEBUG CODE - Will be removed later
-          echo "==== DEBUG: API RESPONSE ===="
-          echo "$RESPONSE" | jq '.'
-          echo "============================"
 
           # Extract token from response
           JWT_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
