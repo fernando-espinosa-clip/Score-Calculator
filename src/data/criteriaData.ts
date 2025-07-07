@@ -59,6 +59,7 @@ export const criteriaData: CriteriaData = [
         min: -4,
         aspects: [
             { description: "None", value: 0 },
+            { description: "Uses the Styles library", value: -2 },
             { description: "Uses the System library", value: -2 },
             { description: "Uses the Labs library", value: -2 },
         ],
@@ -123,6 +124,19 @@ export const criteriaData: CriteriaData = [
                 description: "Does not use code splitting in medium/large applications",
                 value: -2,
             },
+        ],
+    },
+    {
+        category: "Shared Libraries in Module Federation",
+        importance: 4, // Muy importante
+        max: 3,
+        min: -3,
+        aspects: [
+            { description: "Not applicable (not a container micro-frontend)", value: 3 },
+            { description: "Properly configured shared libraries without duplicates", value: 2 },
+            { description: "Shared libraries optimized with version constraints and strategies", value: 3 },
+            { description: "No shared libraries configured (when needed)", value: -3 },
+            { description: "Unoptimized sharing configuration (e.g., duplicates or redundant libraries)", value: -2 },
         ],
     },
     {

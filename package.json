@@ -19,16 +19,16 @@
   "description": "Evaluate projects under specific criteria, facilitating the identification of strengths and weaknesses in a visual and accessible environment",
   "devDependencies": {
     "gh-pages": "^6.3.0",
-    "react-scripts": "5.0.1"
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.0.0"
   },
   "main": "index.tsx",
   "scripts": {
-    "build": "react-scripts build",
-    "eject": "react-scripts eject",
-    "start": "react-scripts start",
-    "test": "react-scripts test",
-    "predeploy": "yarn build",
-    "deploy": "gh-pages -d build"
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "predeploy": "vite build",
+    "deploy": "gh-pages -d dist"
   },
   "browserslist": {
     "production": [
@@ -41,5 +41,6 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "packageManager": "pnpm@9.6.0+sha512.38dc6fba8dba35b39340b9700112c2fe1e12f10b17134715a4aa98ccf7bb035e76fd981cf0bb384dfa98f8d6af5481c2bef2f4266a24bfa20c34eb7147ce0b5e"
 }
