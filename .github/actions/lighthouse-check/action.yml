@@ -93,13 +93,13 @@ runs:
 
     - name: Upload artifacts
       id: upload-artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: lighthouse-results
         path: |
           ./lighthouse-report.json
           ./lighthouse-report.html
-        retention-days: 14
+        retention-days: 7
 
     - name: Set HTML report URL
       id: set-html-url
