@@ -55,16 +55,37 @@ runs:
       id: extract-results
       shell: bash
       run: |
-        # Find the JSON report
-        JSON_REPORT=$(find ./lighthouse-results -name "*.json" | head -n 1)
+        # List all files in the lighthouse-results directory for debugging
+        echo "Files in lighthouse-results directory:"
+        ls -la ./lighthouse-results/
+
+        # Find the JSON report - specifically look for the Lighthouse report
+        JSON_REPORT=$(find ./lighthouse-results -name "*.json" -not -name "manifest.json" | head -n 1)
         HTML_REPORT=$(find ./lighthouse-results -name "*.html" | head -n 1)
 
-        # Extract key metrics
-        PERFORMANCE=$(jq '.categories.performance.score' "$JSON_REPORT")
-        ACCESSIBILITY=$(jq '.categories.accessibility.score' "$JSON_REPORT")
-        BEST_PRACTICES=$(jq '.categories["best-practices"].score' "$JSON_REPORT")
-        SEO=$(jq '.categories.seo.score' "$JSON_REPORT")
-        PWA=$(jq '.categories.pwa.score' "$JSON_REPORT")
+        # Debug information
+        echo "Found JSON report: $JSON_REPORT"
+        if [ -f "$JSON_REPORT" ]; then
+          echo "JSON report content structure:"
+          jq 'keys' "$JSON_REPORT" || echo "Error parsing JSON report"
+        else
+          echo "JSON report file not found!"
+        fi
+
+        # Extract key metrics with fallbacks
+        PERFORMANCE=$(jq '.categories.performance.score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+        ACCESSIBILITY=$(jq '.categories.accessibility.score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+        BEST_PRACTICES=$(jq '.categories["best-practices"].score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+        SEO=$(jq '.categories.seo.score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+        PWA=$(jq '.categories.pwa.score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+
+        # Debug the extracted values
+        echo "Extracted metrics:"
+        echo "Performance: $PERFORMANCE"
+        echo "Accessibility: $ACCESSIBILITY"
+        echo "Best Practices: $BEST_PRACTICES"
+        echo "SEO: $SEO"
+        echo "PWA: $PWA"
 
         # Create results JSON
         RESULTS=$(jq -n \
