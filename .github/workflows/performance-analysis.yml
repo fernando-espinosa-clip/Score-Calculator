@@ -58,11 +58,11 @@ jobs:
             --header 'Accept: application/vnd.com.payclip.v1+json' \
             --header 'Content-Type: application/json' \
             --data-raw '{
-              "email": "$IAM_EMAIL",
-              "password": "$IAM_PASSWORD",
-              "source": "M_DARD",
-              "type": "LOGIN",
-              "expiration_time": "PT72H"
+              \"email\": \"$IAM_EMAIL\",
+              \"password\": \"$IAM_PASSWORD\",
+              \"source\": \"M_DARD\",
+              \"type\": \"LOGIN\",
+              \"expiration_time\": \"PT72H\"
             }'"
           echo "========================================"
 
@@ -78,14 +78,13 @@ jobs:
               \"expiration_time\": \"PT72H\"
             }")
 
-
           # TEMPORARY DEBUG CODE - Will be removed later
           echo "==== DEBUG: API RESPONSE ===="
           echo "$RESPONSE" | jq '.'
           echo "============================"
 
           # Extract token from response
-          JWT_TOKEN=$(echo $RESPONSE | jq -r '.token')
+          JWT_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
 
           # Check if token was obtained successfully
           if [ -z "$JWT_TOKEN" ] || [ "$JWT_TOKEN" == "null" ]; then
@@ -97,7 +96,9 @@ jobs:
           # Save token to environment variable for subsequent steps
           echo "JWT_TOKEN=$JWT_TOKEN" >> $GITHUB_ENV
           echo "Successfully obtained JWT token"
-
+        env:
+          IAM_EMAIL: ${{ vars.IAM_EMAIL }}
+          IAM_PASSWORD: ${{ vars.IAM_PASSWORD }}
 
       - name: Create Lighthouse configuration
         run: |
