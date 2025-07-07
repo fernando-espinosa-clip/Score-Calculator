@@ -230,8 +230,21 @@ jobs:
           echo "This analysis was performed on the local build of the PR branch with a JWT token obtained from the API and injected as both an Authorization header and an access_token cookie before each evaluation." >> performance-report.md
 
           echo "## Lighthouse Report URL" >> performance-report.md
-          echo "The Lighthouse HTML reports are available as artifacts in this workflow run. Download the 'lighthouse-reports' artifact from the link below and open the HTML files to view the detailed Lighthouse reports:" >> performance-report.md
-          echo "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> performance-report.md
+
+          # Find the HTML report file
+          HTML_REPORT=$(ls -t .lighthouseci/lhr-*.html 2>/dev/null | head -n 1)
+          if [ -n "$HTML_REPORT" ]; then
+            HTML_FILENAME=$(basename "$HTML_REPORT")
+            echo "The Lighthouse HTML report is available as an artifact in this workflow run:" >> performance-report.md
+            echo "1. Go to: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> performance-report.md
+            echo "2. Download the 'lighthouse-reports' artifact" >> performance-report.md
+            echo "3. Open the file: **$HTML_FILENAME**" >> performance-report.md
+          else
+            echo "The Lighthouse HTML reports are available as artifacts in this workflow run:" >> performance-report.md
+            echo "1. Go to: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> performance-report.md
+            echo "2. Download the 'lighthouse-reports' artifact" >> performance-report.md
+            echo "3. Open the HTML files to view the detailed Lighthouse reports" >> performance-report.md
+          fi
 
       - name: Comment PR
         uses: actions/github-script@v6
