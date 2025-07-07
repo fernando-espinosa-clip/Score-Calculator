@@ -58,8 +58,8 @@ jobs:
             --header 'Accept: application/vnd.com.payclip.v1+json' \
             --header 'Content-Type: application/json' \
             --data-raw '{
-              "email": "${{ secrets.IAM_EMAIL }}",
-              "password": "${{ secrets.IAM_PASSWORD }}",
+              "email": "$IAM_EMAIL",
+              "password": "$IAM_PASSWORD",
               "source": "M_DARD",
               "type": "LOGIN",
               "expiration_time": "PT72H"
@@ -70,13 +70,13 @@ jobs:
           RESPONSE=$(curl --location 'https://dev-api.clip.mx/iam/user/login' \
             --header 'Accept: application/vnd.com.payclip.v1+json' \
             --header 'Content-Type: application/json' \
-            --data-raw '{
-              "email": "${{ secrets.IAM_EMAIL }}",
-              "password": "${{ secrets.IAM_PASSWORD }}",
-              "source": "M_DARD",
-              "type": "LOGIN",
-              "expiration_time": "PT72H"
-            }')
+            --data-raw "{
+              \"email\": \"$IAM_EMAIL\",
+              \"password\": \"$IAM_PASSWORD\",
+              \"source\": \"M_DARD\",
+              \"type\": \"LOGIN\",
+              \"expiration_time\": \"PT72H\"
+            }")
 
 
           # TEMPORARY DEBUG CODE - Will be removed later
