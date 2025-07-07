@@ -46,7 +46,7 @@ runs:
           --collect.settings.chromeFlags="--no-sandbox --headless" \
           --collect.settings.formFactor="desktop" \
           --collect.settings.screenEmulation.mobile=false \
-          --collect.numberOfRuns=1 \
+          --collect.numberOfRuns=2 \
           --upload.target=filesystem \
           --upload.outputDir=./lighthouse-results
         echo "Lighthouse check completed"
