@@ -13,7 +13,7 @@ outputs:
     value: ${{ steps.extract-results.outputs.results }}
   htmlReportUrl:
     description: 'URL to the HTML report'
-    value: ${{ steps.upload-artifacts.outputs.html_report_url }}
+    value: ${{ steps.set-html-url.outputs.html_report_url }}
 
 runs:
   using: 'composite'

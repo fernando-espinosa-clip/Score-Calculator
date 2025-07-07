@@ -60,7 +60,8 @@ jobs:
               `| PWA | ${formatScore(results.pwa)} |`
             ];
 
-            const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[Detailed HTML Report](${results.htmlReportUrl})`;
+            const htmlReportUrl = '${{ steps.lighthouse.outputs.htmlReportUrl }}';
+            const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[Detailed HTML Report](${htmlReportUrl})`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
