@@ -61,7 +61,7 @@ jobs:
             ];
 
             const htmlReportUrl = '${{ steps.lighthouse.outputs.htmlReportUrl }}';
-            const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[Detailed HTML Report](${htmlReportUrl})`;
+            const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[View GitHub Action Run](${htmlReportUrl}) (download HTML report from the "Artifacts" section)`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
