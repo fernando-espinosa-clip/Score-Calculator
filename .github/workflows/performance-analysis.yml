@@ -49,14 +49,55 @@ jobs:
           MI_SECRETO: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
           MI_NOMBRE: ${{ vars.MI_NOMBRE }}
 
+      - name: Obtain JWT Token
+        id: jwt
+        run: |
+          # Get JWT token from API
+          RESPONSE=$(curl --location 'https://dev-api.clip.mx/iam/user/login' \
+            --header 'Accept: application/vnd.com.clip.mx/v1+json' \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
+                "email": "${{ secrets.IAM_EMAIL }}",
+                "password": "${{ secrets.IAM_PASSWORD }}",
+                "source": "M_DASHBOARD",
+                "type": "LOGIN",
+                "expiration_time":"PT72H"
+            }')
+
+          # Extract token from response
+          JWT_TOKEN=$(echo $RESPONSE | jq -r '.token')
+
+          # Check if token was obtained successfully
+          if [ -z "$JWT_TOKEN" ] || [ "$JWT_TOKEN" == "null" ]; then
+            echo "Failed to obtain JWT token"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          # Save token to environment variable for subsequent steps
+          echo "JWT_TOKEN=$JWT_TOKEN" >> $GITHUB_ENV
+          echo "Successfully obtained JWT token"
+
+
       - name: Create Lighthouse configuration
         run: |
-          cat > lighthouserc.json << 'EOL'
+          cat > lighthouserc.json << EOL
           {
             "ci": {
               "collect": {
                 "settings": {
-                  "output": ["json", "html"]
+                  "output": ["json", "html"],
+                  "extraHeaders": {
+                    "Authorization": "Bearer ${JWT_TOKEN}"
+                  },
+                  "cookies": [
+                    {
+                      "name": "access_token",
+                      "value": "${JWT_TOKEN}",
+                      "domain": "localhost",
+                      "path": "/"
+                    }
+                  ]
                 },
                 "url": [
                   "http://localhost:3000/"
@@ -75,6 +116,7 @@ jobs:
         run: lhci autorun || echo "::set-output name=lighthouse_failed::true"
         env:
           LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN || secrets.GITHUB_TOKEN }}
+          JWT_TOKEN: ${{ env.JWT_TOKEN }}
 
       - name: Debug Lighthouse Output
         run: |
@@ -183,7 +225,7 @@ jobs:
           echo "- SEO: Warning if below 0.8, Error if below 0.5" >> performance-report.md
           echo "" >> performance-report.md
           echo "## Summary" >> performance-report.md
-          echo "This analysis was performed on the local build of the PR branch with an access_token cookie injected before each evaluation." >> performance-report.md
+          echo "This analysis was performed on the local build of the PR branch with a JWT token obtained from the API and injected as both an Authorization header and an access_token cookie before each evaluation." >> performance-report.md
 
       - name: Comment PR
         uses: actions/github-script@v6
