@@ -33,7 +33,7 @@ runs:
     - name: Install Lighthouse
       shell: bash
       run: |
-        pnpm add -g @lhci/cli@0.12.x
+        pnpm add -g @lhci/cli@0.15.x
         echo "Installed Lighthouse CI"
 
     - name: Create output directory
