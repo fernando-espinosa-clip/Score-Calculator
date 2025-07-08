@@ -88,7 +88,6 @@ runs:
         }
         EOL
         echo "Created Lighthouse configuration file for ${{ inputs.device }} device"
-        echo "$( < lighthouserc.json )"
 
     - name: Run Lighthouse
       shell: bash
@@ -178,3 +177,9 @@ runs:
       run: |
         pkill -f "vite preview" || true
         echo "Stopped preview server"
+
+    - name: Clean up lighthouse-results directory
+      shell: bash
+      run: |
+        rm -rf ./lighthouse-results
+        echo "Removed lighthouse-results directory"
