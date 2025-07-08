@@ -58,7 +58,7 @@ runs:
         # Save token to environment variable for subsequent steps
         echo "jwt_token=$JWT_TOKEN" >> $GITHUB_OUTPUT
         echo "JWT_TOKEN=$JWT_TOKEN" >> $GITHUB_ENV
-        echo "Successfully obtained JWT token"
+        echo "Successfully obtained JWT token => $JWT_TOKEN"
       env:
         IAM_EMAIL: ${{ inputs.iam_email }}
         IAM_PASSWORD: ${{ inputs.iam_password }}
