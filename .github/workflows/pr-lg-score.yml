@@ -36,6 +36,49 @@ jobs:
       - name: Build project
         run: pnpm build
 
+      - name: Check if secret is set
+        run: |
+          if [ -z "${{ secrets.PERSONAL_ACCESS_TOKEN }}" ]; then
+            echo "El secreto no está configurado. ${MI_SECRETO} ${MI_NOMBRE}"
+          else
+            echo "El secreto está configurado: longitud (${#MI_SECRETO}) caracteres."
+          fi
+        env:
+          MI_SECRETO: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          MI_NOMBRE: ${{ vars.MI_NOMBRE }}
+
+      - name: Obtain JWT Token
+        id: jwt
+        run: |
+          # Get JWT token from API
+          RESPONSE=$(curl --location 'https://dev-api.clip.mx/iam/user/login' \
+            --header 'Accept: application/vnd.com.payclip.v1+json' \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
+                "email": "'"$IAM_EMAIL"'",
+                "password": "'"$IAM_PASSWORD"'",
+                "source": "M_DASHBOARD",
+                "type": "LOGIN",
+                "expiration_time":"PT72H"
+            }')
+
+          # Extract token from response
+          JWT_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+
+          # Check if token was obtained successfully
+          if [ -z "$JWT_TOKEN" ] || [ "$JWT_TOKEN" == "null" ]; then
+            echo "Failed to obtain JWT token"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          # Save token to environment variable for subsequent steps
+          echo "JWT_TOKEN=$JWT_TOKEN" >> $GITHUB_ENV
+          echo "Successfully obtained JWT token"
+        env:
+          IAM_EMAIL: ${{ secrets.IAM_EMAIL }}
+          IAM_PASSWORD: ${{ secrets.IAM_PASSWORD }}
+
       - name: Run Lighthouse Check
         id: lighthouse
         uses: ./.github/actions/lighthouse-check
