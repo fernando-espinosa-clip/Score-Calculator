@@ -1,0 +1,144 @@
+name: PR Lighthouse Score
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lighthouse-check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.6.0
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Check if secret is set
+        run: |
+          if [ -z "${{ secrets.PERSONAL_ACCESS_TOKEN }}" ]; then
+            echo "El secreto no está configurado. ${MI_SECRETO} ${MI_NOMBRE}"
+          else
+            echo "El secreto está configurado: longitud (${#MI_SECRETO}) caracteres."
+          fi
+        env:
+          MI_SECRETO: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          MI_NOMBRE: ${{ vars.MI_NOMBRE }}
+
+      - name: Obtain JWT Token
+        id: jwt
+        uses: ./.github/actions/obtain-jwt-token
+        with:
+          iam_email: ${{ secrets.IAM_EMAIL }}
+          iam_password: ${{ secrets.IAM_PASSWORD }}
+
+      - name: Run Lighthouse Check - Desktop
+        id: lighthouse-desktop
+        uses: ./.github/actions/lighthouse-check
+        with:
+          url: 'http://localhost:4173'  # Default Vite preview URL
+          device: 'desktop'
+        env:
+          JWT_TOKEN: ${{ env.JWT_TOKEN }}
+
+      - name: Run Lighthouse Check - Mobile
+        id: lighthouse-mobile
+        uses: ./.github/actions/lighthouse-check
+        with:
+          url: 'http://localhost:4173'  # Default Vite preview URL
+          device: 'mobile'
+        env:
+          JWT_TOKEN: ${{ env.JWT_TOKEN }}
+
+      - name: Comment on PR with Lighthouse results
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const actionsCore = require('@actions/core');
+
+            (async () => {
+              try {
+                const desktopResults = JSON.parse('${{ steps.lighthouse-desktop.outputs.results }}');
+                const mobileResults = JSON.parse('${{ steps.lighthouse-mobile.outputs.results }}');
+
+                // Check if any score is below 50
+                const minThreshold = 50;
+                const failedScores = [];
+
+                // Check desktop scores
+                if (Math.round(desktopResults.performance * 100) < minThreshold) failedScores.push('Desktop Performance');
+                if (Math.round(desktopResults.accessibility * 100) < minThreshold) failedScores.push('Desktop Accessibility');
+                if (Math.round(desktopResults.bestPractices * 100) < minThreshold) failedScores.push('Desktop Best Practices');
+                if (Math.round(desktopResults.seo * 100) < minThreshold) failedScores.push('Desktop SEO');
+
+                // Check mobile scores
+                if (Math.round(mobileResults.performance * 100) < minThreshold) failedScores.push('Mobile Performance');
+                if (Math.round(mobileResults.accessibility * 100) < minThreshold) failedScores.push('Mobile Accessibility');
+                if (Math.round(mobileResults.bestPractices * 100) < minThreshold) failedScores.push('Mobile Best Practices');
+                if (Math.round(mobileResults.seo * 100) < minThreshold) failedScores.push('Mobile SEO');
+
+                const formatScore = (score) => {
+                  const percentage = Math.round(score * 100);
+                  let emoji = '🔴';
+                  if (percentage >= 90) emoji = '🟢';
+                  else if (percentage >= 60) emoji = '🟠';
+                  return `${emoji} ${percentage}`;
+                };
+
+                const tableRows = [
+                  '| Metric | Desktop | Mobile |',
+                  '| ------ | ------- | ------ |',
+                  `| Performance | ${formatScore(desktopResults.performance)} | ${formatScore(mobileResults.performance)} |`,
+                  `| Accessibility | ${formatScore(desktopResults.accessibility)} | ${formatScore(mobileResults.accessibility)} |`,
+                  `| Best Practices | ${formatScore(desktopResults.bestPractices)} | ${formatScore(mobileResults.bestPractices)} |`,
+                  `| SEO | ${formatScore(desktopResults.seo)} | ${formatScore(mobileResults.seo)} |`
+                ];
+
+                const desktopReportUrl = '${{ steps.lighthouse-desktop.outputs.htmlReportUrl }}';
+                const mobileReportUrl = '${{ steps.lighthouse-mobile.outputs.htmlReportUrl }}';
+
+                let commentBody = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[View Desktop Report](${desktopReportUrl}) | [View Mobile Report](${mobileReportUrl})\n\n(download HTML reports from the "Artifacts" section)`;
+
+                // If any scores are below the threshold, add a failure message and fail the workflow
+                if (failedScores.length > 0) {
+                  commentBody += `\n\n## ❌ Failed Lighthouse Checks\n\nThe following metrics scored below the minimum threshold of ${minThreshold}%:\n\n- ${failedScores.join('\n- ')}\n\n**This PR cannot be merged until these issues are resolved.**`;
+
+                  // Post the comment
+                  await github.rest.issues.createComment({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: commentBody
+                  });
+
+                  // Fail the workflow
+                  actionsCore.setFailed(`Lighthouse scores below threshold: ${failedScores.join(', ')}`);
+                } else {
+                  // All scores are good, post the success comment
+                  await github.rest.issues.createComment({
+                    issue_number: context.issue.number,
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    body: commentBody
+                  });
+                }
+              } catch (error) {
+                actionsCore.setFailed(`Error processing Lighthouse results: ${error.message}`);
+              }
+            })();
