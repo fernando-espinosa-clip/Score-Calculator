@@ -45,13 +45,15 @@ runs:
     - name: Create Lighthouse configuration
       shell: bash
       run: |
-        # Set device emulation based on input parameter
+        # Set device emulation and throttling based on input parameter
         if [ "${{ inputs.device }}" = "mobile" ]; then
           FORM_FACTOR="mobile"
           SCREEN_EMULATION='"screenEmulation": {"mobile": true, "width": 360, "height": 640, "deviceScaleFactor": 2.625, "disabled": false}'
+          CPU_THROTTLING='"throttling": {"rttMs": 150, "throughputKbps": 1638, "cpuSlowdownMultiplier": 4, "requestLatencyMs": 150, "downloadThroughputKbps": 1638, "uploadThroughputKbps": 750}'
         else
           FORM_FACTOR="desktop"
           SCREEN_EMULATION='"screenEmulation": {"mobile": false, "width": 1350, "height": 940, "deviceScaleFactor": 1, "disabled": false}'
+          CPU_THROTTLING='"throttling": {"rttMs": 40, "throughputKbps": 5120, "cpuSlowdownMultiplier": 2, "requestLatencyMs": 50, "downloadThroughputKbps": 5120, "uploadThroughputKbps": 2560}'
         fi
 
         cat > lighthouserc.json << EOL
@@ -73,7 +75,8 @@ runs:
                   }
                 ],
                 "formFactor": "${FORM_FACTOR}",
-                ${SCREEN_EMULATION}
+                ${SCREEN_EMULATION},
+                ${CPU_THROTTLING}
               },
               "url": ["${{ inputs.url }}"]
             },
