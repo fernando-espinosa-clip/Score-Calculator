@@ -78,6 +78,7 @@ runs:
                 ${SCREEN_EMULATION},
                 ${CPU_THROTTLING}
               },
+              "numberOfRuns": 1,
               "url": ["${{ inputs.url }}"]
             },
             "upload": {
