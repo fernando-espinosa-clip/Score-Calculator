@@ -150,9 +150,9 @@ runs:
         RESULTS_ESCAPED=$(echo "$RESULTS" | jq -c -r @json)
         echo "results=$RESULTS_ESCAPED" >> $GITHUB_OUTPUT
 
-        # Copy reports to a more accessible location
-        cp "$JSON_REPORT" ./lighthouse-report.json
-        cp "$HTML_REPORT" ./lighthouse-report.html
+        # Copy reports to a more accessible location with device-specific names
+        cp "$JSON_REPORT" ./lighthouse-report-${{ inputs.device }}.json
+        cp "$HTML_REPORT" ./lighthouse-report-${{ inputs.device }}.html
 
         echo "Results extracted and saved"
 
@@ -160,10 +160,10 @@ runs:
       id: upload-artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: lighthouse-results
+        name: lighthouse-results-${{ inputs.device }}
         path: |
-          ./lighthouse-report.json
-          ./lighthouse-report.html
+          ./lighthouse-report-${{ inputs.device }}.json
+          ./lighthouse-report-${{ inputs.device }}.html
         retention-days: 7
 
     - name: Set HTML report URL
