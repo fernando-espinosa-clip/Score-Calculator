@@ -9,14 +9,14 @@ import {
 } from "@mui/material";
 
 import CircularProgressWithLabel from "./CircularProgressWithLabel";
-import { scoreColors } from "../helpers/utils";
-import { calculateResults } from "../helpers/calculationUtils";
-import { exportToCSV, exportToJSON, exportToMarkdown } from "../helpers/exportUtils";
+import { scoreColors } from "@/helpers/utils";
+import { calculateResults } from "@/helpers/calculationUtils";
+import { exportToCSV, exportToJSON, exportToMarkdown } from "@/helpers/exportUtils";
 import CriteriaForm from "./CriteriaForm";
 import LineChart from "./LineChart";
 import ValidationDialog from "./ValidationDialog"; // Importamos el nuevo componente
 
-import { criteriaData } from "../data/criteriaData"; // Importamos los criterios
+import { criteriaData } from "@/data/criteriaData"; // Importamos los criterios
 
 const OptimizationCalculator: React.FC = () => {
   const [projectName, setProjectName] = useState<string>(""); // Nuevo estado para guardar el nombre del proyecto
