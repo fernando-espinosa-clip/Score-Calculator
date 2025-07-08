@@ -28,7 +28,8 @@ runs:
         pnpm preview &
         echo "Started preview server"
         # Wait for server to be ready
-        sleep 5
+        # sleep 5
+        echo "Device = ${{ inputs.device }} token: ${JWT_TOKEN}"
 
     - name: Install Lighthouse
       shell: bash
