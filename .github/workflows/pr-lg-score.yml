@@ -5,14 +5,7 @@ on:
       - main
 
 jobs:
-  get-jwt-token:
-    uses: ./.github/actions/get-jwt-token
-    secrets:
-      IAM_EMAIL: ${{ secrets.IAM_EMAIL }}
-      IAM_PASSWORD: ${{ secrets.IAM_PASSWORD }}
-
   lighthouse-check:
-    needs: get-jwt-token
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
