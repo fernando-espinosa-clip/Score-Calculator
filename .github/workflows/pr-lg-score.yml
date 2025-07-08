@@ -47,12 +47,21 @@ jobs:
           iam_email: ${{ secrets.IAM_EMAIL }}
           iam_password: ${{ secrets.IAM_PASSWORD }}
 
-      - name: Run Lighthouse Check
-        id: lighthouse
+      - name: Run Lighthouse Check - Desktop
+        id: lighthouse-desktop
         uses: ./.github/actions/lighthouse-check
         with:
           url: 'http://localhost:4173'  # Default Vite preview URL
-          device: 'desktop'  # Can be 'desktop' or 'mobile'
+          device: 'desktop'
+        env:
+          JWT_TOKEN: ${{ env.JWT_TOKEN }}
+
+      - name: Run Lighthouse Check - Mobile
+        id: lighthouse-mobile
+        uses: ./.github/actions/lighthouse-check
+        with:
+          url: 'http://localhost:4173'  # Default Vite preview URL
+          device: 'mobile'
         env:
           JWT_TOKEN: ${{ env.JWT_TOKEN }}
 
@@ -61,7 +70,8 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const results = JSON.parse('${{ steps.lighthouse.outputs.results }}');
+            const desktopResults = JSON.parse('${{ steps.lighthouse-desktop.outputs.results }}');
+            const mobileResults = JSON.parse('${{ steps.lighthouse-mobile.outputs.results }}');
 
             const formatScore = (score) => {
               const percentage = Math.round(score * 100);
@@ -72,16 +82,18 @@ jobs:
             };
 
             const tableRows = [
-              '| Metric | Score |',
-              '| ------ | ----- |',
-              `| Performance | ${formatScore(results.performance)} |`,
-              `| Accessibility | ${formatScore(results.accessibility)} |`,
-              `| Best Practices | ${formatScore(results.bestPractices)} |`,
-              `| SEO | ${formatScore(results.seo)} |`
+              '| Metric | Desktop | Mobile |',
+              '| ------ | ------- | ------ |',
+              `| Performance | ${formatScore(desktopResults.performance)} | ${formatScore(mobileResults.performance)} |`,
+              `| Accessibility | ${formatScore(desktopResults.accessibility)} | ${formatScore(mobileResults.accessibility)} |`,
+              `| Best Practices | ${formatScore(desktopResults.bestPractices)} | ${formatScore(mobileResults.bestPractices)} |`,
+              `| SEO | ${formatScore(desktopResults.seo)} | ${formatScore(mobileResults.seo)} |`
             ];
 
-            const htmlReportUrl = '${{ steps.lighthouse.outputs.htmlReportUrl }}';
-            const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[View GitHub Action Run](${htmlReportUrl}) (download HTML report from the "Artifacts" section)`;
+            const desktopReportUrl = '${{ steps.lighthouse-desktop.outputs.htmlReportUrl }}';
+            const mobileReportUrl = '${{ steps.lighthouse-mobile.outputs.htmlReportUrl }}';
+
+            const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[View Desktop Report](${desktopReportUrl}) | [View Mobile Report](${mobileReportUrl})\n\n(download HTML reports from the "Artifacts" section)`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
