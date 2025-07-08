@@ -1,0 +1,64 @@
+name: 'Obtain JWT Token'
+description: 'Get JWT token from API for authentication'
+
+inputs:
+  iam_email:
+    description: 'IAM email for authentication'
+    required: true
+  iam_password:
+    description: 'IAM password for authentication'
+    required: true
+  expiration_time:
+    description: 'Token expiration time'
+    required: false
+    default: 'PT72H'
+  source:
+    description: 'Source for the login request'
+    required: false
+    default: 'M_DASHBOARD'
+  type:
+    description: 'Type of login request'
+    required: false
+    default: 'LOGIN'
+
+outputs:
+  jwt_token:
+    description: 'The obtained JWT token'
+    value: ${{ steps.get-token.outputs.jwt_token }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get JWT token
+      id: get-token
+      shell: bash
+      run: |
+        # Get JWT token from API
+        RESPONSE=$(curl --location 'https://dev-api.clip.mx/iam/user/login' \
+          --header 'Accept: application/vnd.com.payclip.v1+json' \
+          --header 'Content-Type: application/json' \
+          --data-raw '{
+              "email": "'"$IAM_EMAIL"'",
+              "password": "'"$IAM_PASSWORD"'",
+              "source": "${{ inputs.source }}",
+              "type": "${{ inputs.type }}",
+              "expiration_time":"${{ inputs.expiration_time }}"
+          }')
+
+        # Extract token from response
+        JWT_TOKEN=$(echo "$RESPONSE" | jq -r '.access_token')
+
+        # Check if token was obtained successfully
+        if [ -z "$JWT_TOKEN" ] || [ "$JWT_TOKEN" == "null" ]; then
+          echo "Failed to obtain JWT token"
+          echo "$RESPONSE"
+          exit 1
+        fi
+
+        # Save token to environment variable for subsequent steps
+        echo "jwt_token=$JWT_TOKEN" >> $GITHUB_OUTPUT
+        echo "JWT_TOKEN=$JWT_TOKEN" >> $GITHUB_ENV
+        echo "Successfully obtained JWT token"
+      env:
+        IAM_EMAIL: ${{ inputs.iam_email }}
+        IAM_PASSWORD: ${{ inputs.iam_password }}

@@ -1,0 +1,91 @@
+name: PR Lighthouse Score
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lighthouse-check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.6.0
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Check if secret is set
+        run: |
+          if [ -z "${{ secrets.PERSONAL_ACCESS_TOKEN }}" ]; then
+            echo "El secreto no está configurado. ${MI_SECRETO} ${MI_NOMBRE}"
+          else
+            echo "El secreto está configurado: longitud (${#MI_SECRETO}) caracteres."
+          fi
+        env:
+          MI_SECRETO: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+          MI_NOMBRE: ${{ vars.MI_NOMBRE }}
+
+      - name: Obtain JWT Token
+        id: jwt
+        uses: ./.github/actions/obtain-jwt-token
+        with:
+          iam_email: ${{ secrets.IAM_EMAIL }}
+          iam_password: ${{ secrets.IAM_PASSWORD }}
+
+      - name: Run Lighthouse Check
+        id: lighthouse
+        uses: ./.github/actions/lighthouse-check
+        with:
+          url: 'http://localhost:4173'  # Default Vite preview URL
+          device: 'desktop'  # Can be 'desktop' or 'mobile'
+        env:
+          JWT_TOKEN: ${{ env.JWT_TOKEN }}
+
+      - name: Comment on PR with Lighthouse results
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const results = JSON.parse('${{ steps.lighthouse.outputs.results }}');
+
+            const formatScore = (score) => {
+              const percentage = Math.round(score * 100);
+              let emoji = '🔴';
+              if (percentage >= 90) emoji = '🟢';
+              else if (percentage >= 50) emoji = '🟠';
+              return `${emoji} ${percentage}`;
+            };
+
+            const tableRows = [
+              '| Metric | Score |',
+              '| ------ | ----- |',
+              `| Performance | ${formatScore(results.performance)} |`,
+              `| Accessibility | ${formatScore(results.accessibility)} |`,
+              `| Best Practices | ${formatScore(results.bestPractices)} |`,
+              `| SEO | ${formatScore(results.seo)} |`
+            ];
+
+            const htmlReportUrl = '${{ steps.lighthouse.outputs.htmlReportUrl }}';
+            const comment = `## 🚀 Lighthouse Performance Results\n\n${tableRows.join('\n')}\n\n[View GitHub Action Run](${htmlReportUrl}) (download HTML report from the "Artifacts" section)`;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
