@@ -52,6 +52,7 @@ jobs:
         uses: ./.github/actions/lighthouse-check
         with:
           url: 'http://localhost:4173'  # Default Vite preview URL
+          device: 'desktop'  # Can be 'desktop' or 'mobile'
         env:
           JWT_TOKEN: ${{ env.JWT_TOKEN }}
 

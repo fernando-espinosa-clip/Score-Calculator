@@ -6,6 +6,10 @@ inputs:
     description: 'URL to run Lighthouse against'
     required: true
     default: 'http://localhost:4173'
+  device:
+    description: 'Device to emulate (desktop or mobile)'
+    required: false
+    default: 'desktop'
 
 outputs:
   results:
@@ -41,6 +45,15 @@ runs:
     - name: Create Lighthouse configuration
       shell: bash
       run: |
+        # Set device emulation based on input parameter
+        if [ "${{ inputs.device }}" = "mobile" ]; then
+          FORM_FACTOR="mobile"
+          SCREEN_EMULATION='"screenEmulation": {"mobile": true, "width": 360, "height": 640, "deviceScaleFactor": 2.625, "disabled": false}'
+        else
+          FORM_FACTOR="desktop"
+          SCREEN_EMULATION='"screenEmulation": {"mobile": false, "width": 1350, "height": 940, "deviceScaleFactor": 1, "disabled": false}'
+        fi
+
         cat > lighthouserc.json << EOL
         {
           "ci": {
@@ -53,12 +66,14 @@ runs:
                 },
                 "cookies": [
                   {
-                    "name": "access_token",
+                    "name": "dev_access_token",
                     "value": "${JWT_TOKEN}",
                     "domain": "localhost",
                     "path": "/"
                   }
-                ]
+                ],
+                "formFactor": "${FORM_FACTOR}",
+                ${SCREEN_EMULATION}
               },
               "url": ["${{ inputs.url }}"]
             },
@@ -69,7 +84,7 @@ runs:
           }
         }
         EOL
-        echo "Created Lighthouse configuration file"
+        echo "Created Lighthouse configuration file for ${{ inputs.device }} device"
 
     - name: Run Lighthouse
       shell: bash
