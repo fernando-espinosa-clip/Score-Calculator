@@ -70,7 +70,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const core = require('@actions/core');
+            const actionsCore = require('@actions/core');
 
             (async () => {
               try {
@@ -128,7 +128,7 @@ jobs:
                   });
 
                   // Fail the workflow
-                  core.setFailed(`Lighthouse scores below threshold: ${failedScores.join(', ')}`);
+                  actionsCore.setFailed(`Lighthouse scores below threshold: ${failedScores.join(', ')}`);
                 } else {
                   // All scores are good, post the success comment
                   await github.rest.issues.createComment({
@@ -139,6 +139,6 @@ jobs:
                   });
                 }
               } catch (error) {
-                core.setFailed(`Error processing Lighthouse results: ${error.message}`);
+                actionsCore.setFailed(`Error processing Lighthouse results: ${error.message}`);
               }
             })();
