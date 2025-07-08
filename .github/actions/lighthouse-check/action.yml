@@ -38,17 +38,43 @@ runs:
         mkdir -p ./lighthouse-results
         echo "Created output directory"
 
+    - name: Create Lighthouse configuration
+      shell: bash
+      run: |
+        cat > lighthouserc.json << EOL
+        {
+          "ci": {
+            "collect": {
+              "settings": {
+                "output": ["json", "html"],
+                "chromeFlags": "--no-sandbox --headless",
+                "extraHeaders": {
+                  "Authorization": "Bearer ${JWT_TOKEN}"
+                },
+                "cookies": [
+                  {
+                    "name": "access_token",
+                    "value": "${JWT_TOKEN}",
+                    "domain": "localhost",
+                    "path": "/"
+                  }
+                ]
+              },
+              "url": ["${{ inputs.url }}"]
+            },
+            "upload": {
+              "target": "filesystem",
+              "outputDir": "./lighthouse-results"
+            }
+          }
+        }
+        EOL
+        echo "Created Lighthouse configuration file"
+
     - name: Run Lighthouse
       shell: bash
       run: |
-        lhci autorun \
-          --collect.url=${{ inputs.url }} \
-          --collect.settings.chromeFlags="--no-sandbox --headless" \
-          --collect.settings.formFactor="desktop" \
-          --collect.settings.screenEmulation.mobile=false \
-          --collect.numberOfRuns=2 \
-          --upload.target=filesystem \
-          --upload.outputDir=./lighthouse-results
+        lhci autorun --config=lighthouserc.json
         echo "Lighthouse check completed"
 
     - name: Extract results
