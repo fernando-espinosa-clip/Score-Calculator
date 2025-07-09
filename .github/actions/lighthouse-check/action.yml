@@ -96,6 +96,18 @@ runs:
         lhci autorun --config=lighthouserc.json
         echo "Lighthouse check completed"
 
+    - name: Check if JWT_TOKEN is set
+      shell: bash
+      run: |
+        if [ -z "${JWT_TOKEN}" ]; then
+          echo "❌ ERROR: La variable JWT_TOKEN no está configurada."
+          exit 1
+        else
+          echo "✅ La variable JWT_TOKEN está configurada correctamente."
+        fi
+      env:
+        JWT_TOKEN: ${{ env.JWT_TOKEN }}  # Pasamos JWT_TOKEN de las variables de entorno
+
     - name: Extract results
       id: extract-results
       shell: bash
