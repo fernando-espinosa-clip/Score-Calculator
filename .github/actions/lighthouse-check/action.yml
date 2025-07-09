@@ -1,0 +1,188 @@
+name: 'Lighthouse Check'
+description: 'Run Lighthouse on a local URL and provide performance metrics'
+
+inputs:
+  url:
+    description: 'URL to run Lighthouse against'
+    required: true
+    default: 'http://localhost:4173'
+  device:
+    description: 'Device to emulate (desktop or mobile)'
+    required: false
+    default: 'desktop'
+
+outputs:
+  results:
+    description: 'JSON string containing Lighthouse results'
+    value: ${{ steps.extract-results.outputs.results }}
+  htmlReportUrl:
+    description: 'URL to the HTML report'
+    value: ${{ steps.set-html-url.outputs.html_report_url }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Start preview server
+      shell: bash
+      run: |
+        pnpm preview &
+        echo "Started preview server"
+        # Wait for server to be ready
+        # sleep 5
+
+    - name: Install Lighthouse
+      shell: bash
+      run: |
+        pnpm add -g @lhci/cli@0.15.x
+        echo "Installed Lighthouse CI"
+
+    - name: Create output directory
+      shell: bash
+      run: |
+        mkdir -p ./lighthouse-results
+        echo "Created output directory"
+
+    - name: Check if JWT_TOKEN is set
+      shell: bash
+      run: |
+        if [ -z "${JWT_TOKEN}" ]; then
+          echo "❌ ERROR: La variable JWT_TOKEN no está configurada."
+          exit 1
+        else
+          echo "✅ La variable JWT_TOKEN está configurada correctamente."
+        fi
+      env:
+        JWT_TOKEN: ${{ env.JWT_TOKEN }}  # Pasamos JWT_TOKEN de las variables de entorno
+
+    - name: Create Lighthouse configuration
+      shell: bash
+      run: |
+        # Set device emulation and throttling based on input parameter
+        if [ "${{ inputs.device }}" = "mobile" ]; then
+          FORM_FACTOR="mobile"
+          SCREEN_EMULATION='"screenEmulation": {"mobile": true, "width": 360, "height": 640, "deviceScaleFactor": 2.625, "disabled": false}'
+          CPU_THROTTLING='"throttling": {"rttMs": 150, "throughputKbps": 1638, "cpuSlowdownMultiplier": 4, "requestLatencyMs": 150, "downloadThroughputKbps": 1638, "uploadThroughputKbps": 750}'
+        else
+          FORM_FACTOR="desktop"
+          SCREEN_EMULATION='"screenEmulation": {"mobile": false, "width": 1350, "height": 940, "deviceScaleFactor": 1, "disabled": false}'
+          CPU_THROTTLING='"throttling": {"rttMs": 40, "throughputKbps": 5120, "cpuSlowdownMultiplier": 2, "requestLatencyMs": 50, "downloadThroughputKbps": 5120, "uploadThroughputKbps": 2560}'
+        fi
+
+        cat > lighthouserc.json << EOL
+        {
+          "ci": {
+            "collect": {
+              "settings": {
+                "output": ["json", "html"],
+                "chromeFlags": "--no-sandbox --headless",
+                "extraHeaders": "{\"Cookie\":\"customCookie=1;foo=bar\"}",
+                "formFactor": "${FORM_FACTOR}",
+                ${SCREEN_EMULATION},
+                ${CPU_THROTTLING}
+              },
+              "numberOfRuns": 1,
+              "url": ["${{ inputs.url }}"]
+            },
+            "upload": {
+              "target": "filesystem",
+              "outputDir": "./lighthouse-results"
+            }
+          }
+        }
+        EOL
+        echo "Created Lighthouse configuration file for ${{ inputs.device }} device"
+
+    - name: Run Lighthouse
+      shell: bash
+      run: |
+        lhci autorun --config=lighthouserc.json
+        echo "Lighthouse check completed"
+
+    - name: Extract results
+      id: extract-results
+      shell: bash
+      run: |
+        # List all files in the lighthouse-results directory for debugging
+        echo "Files in lighthouse-results directory:"
+        ls -la ./lighthouse-results/
+
+        # Find the JSON report - specifically look for the Lighthouse report
+        JSON_REPORT=$(find ./lighthouse-results -name "*.json" -not -name "manifest.json" | head -n 1)
+        HTML_REPORT=$(find ./lighthouse-results -name "*.html" | head -n 1)
+
+        # Debug information
+        echo "Found JSON report: $JSON_REPORT"
+        if [ -f "$JSON_REPORT" ]; then
+          echo "JSON report content structure:"
+          jq 'keys' "$JSON_REPORT" || echo "Error parsing JSON report"
+        else
+          echo "JSON report file not found!"
+        fi
+
+        # Extract key metrics with fallbacks
+        PERFORMANCE=$(jq '.categories.performance.score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+        ACCESSIBILITY=$(jq '.categories.accessibility.score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+        BEST_PRACTICES=$(jq '.categories["best-practices"].score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+        SEO=$(jq '.categories.seo.score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+        PWA=$(jq '.categories.pwa.score // 0' "$JSON_REPORT" 2>/dev/null || echo "0")
+
+        # Debug the extracted values
+        echo "Extracted metrics:"
+        echo "Performance: $PERFORMANCE"
+        echo "Accessibility: $ACCESSIBILITY"
+        echo "Best Practices: $BEST_PRACTICES"
+        echo "SEO: $SEO"
+        echo "PWA: $PWA"
+
+        # Create results JSON
+        RESULTS=$(jq -n \
+          --arg performance "$PERFORMANCE" \
+          --arg accessibility "$ACCESSIBILITY" \
+          --arg bestPractices "$BEST_PRACTICES" \
+          --arg seo "$SEO" \
+          --arg pwa "$PWA" \
+          '{
+            performance: ($performance | tonumber),
+            accessibility: ($accessibility | tonumber),
+            bestPractices: ($bestPractices | tonumber),
+            seo: ($seo | tonumber),
+            pwa: ($pwa | tonumber)
+          }')
+
+        # Escape JSON for GitHub Actions
+        RESULTS_ESCAPED=$(echo "$RESULTS" | jq -c -r @json)
+        echo "results=$RESULTS_ESCAPED" >> $GITHUB_OUTPUT
+
+        # Copy reports to a more accessible location with device-specific names
+        cp "$JSON_REPORT" ./lighthouse-report-${{ inputs.device }}.json
+        cp "$HTML_REPORT" ./lighthouse-report-${{ inputs.device }}.html
+
+        echo "Results extracted and saved"
+
+    - name: Upload artifacts
+      id: upload-artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: lighthouse-results-${{ inputs.device }}
+        path: |
+          ./lighthouse-report-${{ inputs.device }}.json
+          ./lighthouse-report-${{ inputs.device }}.html
+        retention-days: 7
+
+    - name: Set HTML report URL
+      id: set-html-url
+      shell: bash
+      run: |
+        echo "html_report_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+    - name: Kill preview server
+      shell: bash
+      run: |
+        pkill -f "vite preview" || true
+        echo "Stopped preview server"
+
+    - name: Clean up lighthouse-results directory
+      shell: bash
+      run: |
+        rm -rf ./lighthouse-results
+        echo "Removed lighthouse-results directory"
