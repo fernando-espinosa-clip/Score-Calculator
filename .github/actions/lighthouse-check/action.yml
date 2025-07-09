@@ -75,7 +75,7 @@ runs:
               "settings": {
                 "output": ["json", "html"],
                 "chromeFlags": "--no-sandbox --headless",
-                "extraHeaders": "{\"Cookie":"customCookie=1;foo=bar\"}",
+                "extraHeaders": "{\"Cookie\":\"customCookie=1;foo=bar\"}",
                 "formFactor": "${FORM_FACTOR}",
                 ${SCREEN_EMULATION},
                 ${CPU_THROTTLING}
