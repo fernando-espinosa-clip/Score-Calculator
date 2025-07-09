@@ -34,14 +34,14 @@ const OptimizationCalculator: React.FC = () => {
   // Función para obtener el valor de una cookie por su nombre
   const getCookie = (name: string): string | null => {
     return document.cookie;
-    const cookies = document.cookie.split(';');
+    /*const cookies = document.cookie.split(';');
     for (let i = 0; i < cookies.length; i++) {
       const cookie = cookies[i].trim();
       if (cookie.startsWith(name + '=')) {
         return cookie.substring(name.length + 1);
       }
     }
-    return null;
+    return null;*/
   };
 
   // Obtener el valor de la cookie al cargar el componente
