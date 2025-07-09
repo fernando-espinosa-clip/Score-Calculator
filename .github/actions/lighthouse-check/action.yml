@@ -76,7 +76,7 @@ runs:
                 "output": ["json", "html"],
                 "chromeFlags": "--no-sandbox --headless",
                 "extraHeaders": {
-                  "Authorization": "Bearer ${JWT_TOKEN}"
+                  "Authorization": "Bearer ${JWT_TOKEN}",
                   "Cookie": "dev_access_token=fernando;"
                 },
                 "cookies": [
