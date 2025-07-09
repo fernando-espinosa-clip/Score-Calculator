@@ -73,7 +73,6 @@ runs:
           "ci": {
             "collect": {
               "settings": {
-                "extraHeaders": "{\"Cookie\": \"dev_access_token=${JWT_TOKEN}\"}"
                 "output": ["json", "html"],
                 "chromeFlags": "--no-sandbox --headless",
                 "extraHeaders": {
@@ -81,8 +80,14 @@ runs:
                 },
                 "cookies": [
                   {
-                    "name": "dev_access_token",
+                    "name": "dev_access_token1",
                     "value": "${JWT_TOKEN}",
+                    "domain": "localhost",
+                    "path": "/"
+                  },
+                  {
+                    "name": "dev_access_token",
+                    "value": "Akira Clip",
                     "domain": "localhost",
                     "path": "/"
                   }
