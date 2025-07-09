@@ -75,24 +75,7 @@ runs:
               "settings": {
                 "output": ["json", "html"],
                 "chromeFlags": "--no-sandbox --headless",
-                "extraHeaders": {
-                  "Authorization": "Bearer ${JWT_TOKEN}",
-                  "Cookie": "dev_access_token=fernando&domain=localhost;"
-                },
-                "cookies": [
-                  {
-                    "name": "dev_access_token1",
-                    "value": "${JWT_TOKEN}",
-                    "domain": "localhost",
-                    "path": "/"
-                  },
-                  {
-                    "name": "dev_access_token",
-                    "value": "Akira Clip",
-                    "domain": "localhost",
-                    "path": "/"
-                  }
-                ],
+                "extraHeaders": "{\"Cookie":"customCookie=1;foo=bar\"}",
                 "formFactor": "${FORM_FACTOR}",
                 ${SCREEN_EMULATION},
                 ${CPU_THROTTLING}
