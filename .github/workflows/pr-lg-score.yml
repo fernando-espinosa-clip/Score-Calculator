@@ -1,0 +1,117 @@
+name: PR Lighthouse Score
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  lighthouse-check:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 9.6.0
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build project
+        run: pnpm build
+
+      - name: Obtain JWT Token
+        id: jwt
+        uses: ./.github/actions/obtain-jwt-token
+        with:
+          iam_email: ${{ secrets.IAM_EMAIL }}
+          iam_password: ${{ secrets.IAM_PASSWORD }}
+
+      - name: Run Lighthouse Check - Desktop
+        id: lighthouse-desktop
+        uses: ./.github/actions/lighthouse-check
+        with:
+          url: 'http://localhost:4173'
+          device: 'desktop'
+        env:
+          JWT_TOKEN: ${{ env.JWT_TOKEN }}
+
+      - name: Run Lighthouse Check - Mobile
+        id: lighthouse-mobile
+        uses: ./.github/actions/lighthouse-check
+        with:
+          url: 'http://localhost:4173'
+          device: 'mobile'
+        env:
+          JWT_TOKEN: ${{ env.JWT_TOKEN }}
+
+      - name: Verify Lighthouse Scores and Comment on PR
+        if: ${{ steps.lighthouse-desktop.outputs.results != '' && steps.lighthouse-mobile.outputs.results != '' }}
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const desktopResults = JSON.parse('${{ steps.lighthouse-desktop.outputs.results }}');
+            const mobileResults = JSON.parse('${{ steps.lighthouse-mobile.outputs.results }}');
+
+            const formatScore = (score) => {
+              const percentage = Math.round(score * 100);
+              let emoji = '🔴';
+              if (percentage >= 90) emoji = '🟢';
+              else if (percentage >= 50) emoji = '🟠';
+              return `${emoji} ${percentage}%`;
+            };
+
+            const tableRows = [
+              '| Métrica          | Desktop                | Mobile                 |',
+              '|------------------|------------------------|------------------------|',
+              `| Performance      | ${formatScore(desktopResults.performance)} | ${formatScore(mobileResults.performance)} |`,
+              `| Accessibility    | ${formatScore(desktopResults.accessibility)} | ${formatScore(mobileResults.accessibility)} |`,
+              `| Best Practices   | ${formatScore(desktopResults.bestPractices)} | ${formatScore(mobileResults.bestPractices)} |`,
+              `| SEO              | ${formatScore(desktopResults.seo)} | ${formatScore(mobileResults.seo)} |`,
+            ];
+
+            const failingMetrics = [];
+            if (desktopResults.performance <= 0.5) failingMetrics.push('Performance (Desktop)');
+            if (mobileResults.performance <= 0.5) failingMetrics.push('Performance (Mobile)');
+            if (desktopResults.accessibility <= 0.5) failingMetrics.push('Accessibility (Desktop)');
+            if (mobileResults.accessibility <= 0.5) failingMetrics.push('Accessibility (Mobile)');
+            if (desktopResults.bestPractices <= 0.5) failingMetrics.push('Best Practices (Desktop)');
+            if (mobileResults.bestPractices <= 0.5) failingMetrics.push('Best Practices (Mobile)');
+            if (desktopResults.seo <= 0.5) failingMetrics.push('SEO (Desktop)');
+            if (mobileResults.seo <= 0.5) failingMetrics.push('SEO (Mobile)');
+
+            const desktopReportUrl = '${{ steps.lighthouse-desktop.outputs.htmlReportUrl }}';
+            const mobileReportUrl = '${{ steps.lighthouse-mobile.outputs.htmlReportUrl }}';
+            const commentBody = `
+            ## 🚦 Resultados de Lighthouse
+            
+            ${tableRows.join('\n')}
+            
+            🔗 [Ver reporte Desktop completo](${desktopReportUrl})
+            🔗 [Ver reporte Mobile completo](${mobileReportUrl})
+            
+            ${failingMetrics.length > 0
+              ? `### ⚠️ Problemas detectados:\n- ${failingMetrics.join('\n- ')}\n\n💡 Por favor, corrige los problemas antes de fusionar el PR.`
+              : '✅ Todas las métricas cumplen con los requisitos mínimos.'}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });
+
+            if (failingMetrics.length > 0) {
+              core.setFailed('Algunas métricas de Lighthouse no alcanzan el puntaje mínimo requerido.');
+            }

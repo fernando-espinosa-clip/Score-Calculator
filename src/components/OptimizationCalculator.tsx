@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -9,14 +9,14 @@ import {
 } from "@mui/material";
 
 import CircularProgressWithLabel from "./CircularProgressWithLabel";
-import { scoreColors } from "../helpers/utils";
-import { calculateResults } from "../helpers/calculationUtils";
-import { exportToCSV, exportToJSON, exportToMarkdown } from "../helpers/exportUtils";
+import { scoreColors } from "@/helpers/utils";
+import { calculateResults } from "@/helpers/calculationUtils";
+import { exportToCSV, exportToJSON, exportToMarkdown } from "@/helpers/exportUtils";
 import CriteriaForm from "./CriteriaForm";
 import LineChart from "./LineChart";
 import ValidationDialog from "./ValidationDialog"; // Importamos el nuevo componente
 
-import { criteriaData } from "../data/criteriaData"; // Importamos los criterios
+import { criteriaData } from "@/data/criteriaData"; // Importamos los criterios
 
 const OptimizationCalculator: React.FC = () => {
   const [projectName, setProjectName] = useState<string>(""); // Nuevo estado para guardar el nombre del proyecto
@@ -29,6 +29,28 @@ const OptimizationCalculator: React.FC = () => {
   const [base10Score, setBase10Score] = useState<string>("0");
   const [showModal, setShowModal] = useState<boolean>(false); // Nueva variable para controlar el estado del diálogo modal
   const [modalMessage, setModalMessage] = useState<string>(""); // Nuevo estado para el mensaje dentro del diálogo modal
+  const [devAccessToken, setDevAccessToken] = useState<string>("NO COOKIE"); // Estado para almacenar el valor de la cookie
+
+  // Función para obtener el valor de una cookie por su nombre
+  const getCookie = (name: string): string | null => {
+    return document.cookie;
+    /*const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.startsWith(name + '=')) {
+        return cookie.substring(name.length + 1);
+      }
+    }
+    return null;*/
+  };
+
+  // Obtener el valor de la cookie al cargar el componente
+  useEffect(() => {
+    const cookieValue = getCookie('dev_access_token');
+    if (cookieValue) {
+      setDevAccessToken(cookieValue);
+    }
+  }, []);
 
   // Maneja los cambios en el campo del nombre del proyecto
   const handleProjectNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,6 +111,9 @@ const OptimizationCalculator: React.FC = () => {
 
   return (
       <Container maxWidth="md">
+        <Typography variant="body2" align="center" sx={{ mb: 1 }}>
+          dev_access_token: {devAccessToken}
+        </Typography>
         <Typography variant="h4" gutterBottom align="center">
           Project Optimization Calculator
         </Typography>
