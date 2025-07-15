@@ -22,13 +22,14 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Start preview server
+    - name: Install and start serve
       shell: bash
       run: |
-        pnpm preview &
-        echo "Started preview server"
+        npm install -g serve
+        serve -s dist -l 4173 &
+        echo "Started serve server"
         # Wait for server to be ready
-        # sleep 5
+        sleep 5
 
     - name: Install Lighthouse
       shell: bash
@@ -175,11 +176,11 @@ runs:
       run: |
         echo "html_report_url=https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_OUTPUT
 
-    - name: Kill preview server
+    - name: Kill serve server
       shell: bash
       run: |
-        pkill -f "vite preview" || true
-        echo "Stopped preview server"
+        pkill -f "serve -s dist" || true
+        echo "Stopped serve server"
 
     - name: Clean up lighthouse-results directory
       shell: bash
